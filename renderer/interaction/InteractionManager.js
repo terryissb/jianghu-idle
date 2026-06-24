@@ -1,35 +1,41 @@
 export class InteractionManager {
-  constructor(ui) {
+  constructor(ui, engine) {
     this.ui = ui;
+    this.engine = engine;
   }
 
   bind() {
     const character = document.getElementById('characterLayer');
     const stats = document.getElementById('hiddenStats');
 
-    if (!character || !stats) {
-      console.error('[Interaction] elements not found');
+    if (!character) {
+      console.error('[INTERACTION] characterLayer not found');
       return;
     }
 
     // Hover stats
     character.addEventListener('mouseenter', () => {
       console.log('[HOVER] pet');
-      stats.style.opacity = '1';
-      stats.style.transform = 'translateX(-50%) translateY(0)';
+      if (stats) {
+        stats.style.opacity = '1';
+        stats.style.transform = 'translateX(-50%) translateY(0)';
+      }
     });
 
     character.addEventListener('mouseleave', () => {
-      stats.style.opacity = '0';
-      stats.style.transform = 'translateX(-50%) translateY(10px)';
+      if (stats) {
+        stats.style.opacity = '0';
+        stats.style.transform = 'translateX(-50%) translateY(10px)';
+      }
     });
 
     // Click to open history
     character.addEventListener('click', (e) => {
-      // Only click on non-drag area
       if (e.target.classList.contains('drag-zone')) return;
-      console.log('[CLICK] pet - open history');
-      this.ui.showHistoryPanel();
+      console.log('[PET] clicked');
+      if (this.ui) {
+        this.ui.showHistoryPanel();
+      }
     });
 
     // Close panels on outside click
@@ -37,7 +43,8 @@ export class InteractionManager {
       const panels = document.querySelectorAll('.panel');
       const isPanel = e.target.closest('.panel');
       const isCharacter = e.target.closest('#characterLayer');
-      if (!isPanel && !isCharacter) {
+      const isMeditationBtn = e.target.closest('#meditationBtn');
+      if (!isPanel && !isCharacter && !isMeditationBtn) {
         panels.forEach(p => p.classList.remove('show'));
       }
     });
@@ -46,6 +53,7 @@ export class InteractionManager {
     document.querySelectorAll('.panel-tab').forEach(tab => {
       tab.addEventListener('click', (e) => {
         const panel = e.target.closest('.panel');
+        if (!panel) return;
         panel.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
         panel.querySelectorAll('.panel-tab-content').forEach(c => c.classList.remove('active'));
         e.target.classList.add('active');
@@ -56,13 +64,14 @@ export class InteractionManager {
 
     // Meditation toggle
     const medBtn = document.getElementById('meditationBtn');
-    if (medBtn) {
-      medBtn.addEventListener('click', () => {
-        window.gameEngine.toggleMeditation();
+    if (medBtn && this.engine) {
+      medBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.engine.toggleMeditation();
         medBtn.classList.toggle('active');
       });
     }
 
-    console.log('[Interaction] ready');
+    console.log('[INTERACTION] bound');
   }
 }
