@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修仙桌宠 v2.1</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: transparent;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 20px;
+    -webkit-user-select: none;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #app {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* ==================== Character Layer ==================== */
+  .character-layer {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 120px;
+    z-index: 1;
+  }
+
+  .drag-zone {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    -webkit-app-region: drag;
+    z-index: 1;
+    border-radius: 50%;
+  }
+
+  .cultivator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.04); }
+  }
+
+  .cultivator .head {
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle at 40% 40%, #f5d0a9, #d4a574);
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
+  .cultivator .head::before, .cultivator .head::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 50%;
+    top: 9px;
+  }
+  .cultivator .head::before { left: 5px; }
+  .cultivator .head::after { right: 5px; }
+
+  .cultivator .body {
+    width: 34px;
+    height: 26px;
+    background: linear-gradient(180deg, #4a6a8a, #2a3a5a);
+    border-radius: 10px 10px 4px 4px;
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  .cultivator .legs {
+    width: 42px;
+    height: 12px;
+    background: linear-gradient(180deg, #3a5060, #1a3040);
+    border-radius: 0 0 18px 18px;
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  .cultivator .arms {
+    width: 38px;
+    height: 7px;
+    background: linear-gradient(90deg, #4a6a8a, #2a3a5a);
+    border-radius: 4px;
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+  }
+  .cultivator .arms::before, .cultivator .arms::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: #f5d0a9;
+    border-radius: 50%;
+    top: -1px;
+  }
+  .cultivator .arms::before { left: -2px; }
+  .cultivator .arms::after { right: -2px; }
+
+  .aura {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    animation: auraPulse 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes auraPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.1; }
+  }
+
+  .state-label {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .character-layer:hover .state-label { opacity: 1; }
+
+  /* ==================== UI Layer ==================== */
+  .ui-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  .hidden-stats {
+    position: absolute;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(0,0,0,0.85);
+    border: 1px solid rgba(184, 134, 11, 0.4);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 10000;
+  }
+
+  .event-bubble {
+    position: absolute;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(245, 240, 232, 0.97);
+    border: 2px solid #b8860b;
+    border-radius: 14px;
+    padding: 14px;
+    width: 260px;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    opacity: 0;
+    pointer-events: auto;
+    transition: all 0.4s ease;
+    z-index: 100000;
+    display: none;
+    visibility: hidden;
+  }
+  .event-bubble.show {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .event-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #b8860b;
+  }
+
+  .bubble-title {
+    font-weight: 700;
+    color: #b33939;
+    font-size: 15px;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .bubble-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .type-daily { background: #2c4a6e; color: #fff; }
+  .type-qi { background: #6b3a7d; color: #fff; }
+  .type-crisis { background: #b33939; color: #fff; }
+  .bubble-desc { color: #555; margin-bottom: 10px; text-align: center; }
+
+  .choices { display: flex; flex-direction: column; gap: 6px; }
+  .choice-btn {
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(184,134,11,0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    color: #1a1a1a;
+    pointer-events: auto;
+  }
+  .choice-btn:hover { background: rgba(184, 134, 11, 0.1); border-color: #b8860b; }
+  .choice-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .choice-label {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #b8860b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    text-align: center;
+    line-height: 20px;
+    margin-right: 6px;
+  }
+  .choice-result {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(184,134,11,0.3);
+    font-size: 12px;
+    color: #2d5a27;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="character-layer" id="characterLayer">
+    <div class="drag-zone"></div>
+    <div class="cultivator" id="cultivator">
+      <div class="head"></div>
+      <div class="body"></div>
+      <div class="legs"></div>
+      <div class="arms"></div>
+    </div>
+    <div class="aura"></div>
+    <div class="state-label" id="stateLabel">闭目修炼</div>
+  </div>
+
+  <div class="ui-layer" id="uiLayer">
+    <div class="hidden-stats" id="hiddenStats"></div>
+    <div class="event-bubble" id="eventBubble">
+      <div class="bubble-title" id="bubbleTitle"></div>
+      <div style="text-align:center"><span class="bubble-type" id="bubbleType"></span></div>
+      <div class="bubble-desc" id="bubbleDesc"></div>
+      <div class="choices" id="choices"></div>
+      <div class="choice-result" id="choiceResult"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./bootstrap.js"></script>
+</body>
+</html>

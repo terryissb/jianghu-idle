@@ -1,69 +1,33 @@
-const { app, BrowserWindow, Tray, Menu, globalShortcut } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-let mainWindow;
-let tray;
+let win;
 
-function createWindow() {
-  const { screen } = require('electron');
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
-
-  mainWindow = new BrowserWindow({
-    width: 320,
-    height: 380,
-    x: width - 340,
-    y: height - 420,
+app.whenReady().then(() => {
+  win = new BrowserWindow({
+    width: 400,
+    height: 600,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
     resizable: false,
     hasShadow: false,
-    skipTaskbar: false,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
     }
   });
 
-  const htmlPath = path.join(__dirname, 'pet.html');
-  console.log('[main] loading:', htmlPath);
-  mainWindow.loadFile(htmlPath);
+  win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  win.setIgnoreMouseEvents(false);
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-}
+  win.webContents.openDevTools({ mode: 'detach' });
 
-app.whenReady().then(() => {
-  console.log('[main] app ready');
-  createWindow();
-
-  globalShortcut.register('CommandOrControl+Shift+J', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-      }
-    }
-  });
+  console.log('[MAIN] window created');
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
-
-app.on('will-quit', () => {
-  globalShortcut.unregisterAll();
+  if (process.platform !== 'darwin') app.quit();
 });
