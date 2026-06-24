@@ -1,7 +1,6 @@
 export class InteractionManager {
-  constructor(ui, engine) {
-    this.ui = ui;
-    this.engine = engine;
+  constructor(kernel) {
+    this.kernel = kernel;
   }
 
   bind() {
@@ -29,12 +28,12 @@ export class InteractionManager {
       }
     });
 
-    // Click to open history
+    // Click → Kernel
     character.addEventListener('click', (e) => {
       if (e.target.classList.contains('drag-zone')) return;
       console.log('[PET] clicked');
-      if (this.ui) {
-        this.ui.showHistoryPanel();
+      if (this.kernel) {
+        this.kernel.handlePetClick();
       }
     });
 
@@ -62,12 +61,12 @@ export class InteractionManager {
       });
     });
 
-    // Meditation toggle
+    // Meditation toggle → Kernel
     const medBtn = document.getElementById('meditationBtn');
-    if (medBtn && this.engine) {
+    if (medBtn && this.kernel) {
       medBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.engine.toggleMeditation();
+        this.kernel.toggleMeditation();
         medBtn.classList.toggle('active');
       });
     }

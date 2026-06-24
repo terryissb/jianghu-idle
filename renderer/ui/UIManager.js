@@ -3,7 +3,8 @@ import { getAllHistory } from '../engine/HistorySystem.js';
 import { getActiveTechniques, getLearnedTechniques } from '../engine/TechniqueSystem.js';
 
 export class UIManager {
-  constructor() {
+  constructor(kernel) {
+    this.kernel = kernel;
     this.ensureDOM();
     this.eventBubble = document.getElementById('eventBubble');
     this.hiddenStats = document.getElementById('hiddenStats');
@@ -76,8 +77,8 @@ export class UIManager {
         btn.innerHTML = `<span class="choice-label">${ch.id}</span>${ch.text}`;
         btn.onclick = () => {
           console.log('[Click] choice:', ch.id);
-          if (window.__GAME__ && window.__GAME__.engine) {
-            window.__GAME__.engine.handleChoice(event, ch.id);
+          if (this.kernel) {
+            this.kernel.handleChoice(event, ch.id);
           }
         };
         choices.appendChild(btn);
