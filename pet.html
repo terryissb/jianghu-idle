@@ -1,820 +1,1144 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>江湖挂机录 - 桌面宠物</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修仙挂机 - 桌面宠物</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap');
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --ink: #1a1a1a;
-            --paper: #f5f0e8;
-            --paper-dark: #e8e0d0;
-            --red: #b33939;
-            --red-light: #c44545;
-            --gold: #b8860b;
-            --gold-light: #daa520;
-            --jade: #2d5a27;
-            --jade-light: #3d7a37;
-            --blue: #2c4a6e;
-            --purple: #6b3a7d;
-            --border: #c9b99a;
-        }
+  :root {
+    --ink: #1a1a1a;
+    --gold: #b8860b;
+    --gold-light: #daa520;
+    --jade: #2d5a27;
+    --jade-light: #3d7a37;
+    --red: #b33939;
+    --blue: #2c4a6e;
+    --purple: #6b3a7d;
+    --white: rgba(255,255,255,0.9);
+  }
 
-        body {
-            font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
-            background: transparent;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding-bottom: 20px;
-            -webkit-user-select: none;
-            user-select: none;
-            overflow: hidden;
-        }
+  body {
+    font-family: 'Noto Serif SC', 'SimSun', serif;
+    background: transparent;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 20px;
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+  }
 
-        /* 宠物卡片 - 可拖动区域 */
-        .pet-card {
-            background: linear-gradient(180deg, #2a2520 0%, #1a1815 100%);
-            border: 2px solid var(--gold);
-            border-radius: 16px;
-            padding: 16px;
-            width: 220px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(184, 134, 11, 0.2);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            -webkit-app-region: drag; /* Electron 拖动窗口 */
-            cursor: grab;
-        }
+  /* 极简打坐小人 */
+  .cultivator-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    cursor: grab;
+    -webkit-app-region: drag;
+  }
 
-        .pet-card:active {
-            cursor: grabbing;
-        }
+  .cultivator-wrapper:active { cursor: grabbing; }
 
-        .pet-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
-        }
+  /* 四种状态 */
+  .cultivator-wrapper.state-closed .cultivator { animation: breathe-closed 3s ease-in-out infinite; }
+  .cultivator-wrapper.state-circulate .cultivator { animation: breathe-circulate 2s ease-in-out infinite; }
+  .cultivator-wrapper.state-breakthrough .cultivator { animation: breakthrough-shake 0.5s ease-in-out infinite; }
+  .cultivator-wrapper.state-disturbed .cultivator { animation: disturbed-tremble 0.3s ease-in-out infinite; }
 
-        /* 不可拖动元素 */
-        .pet-realm, .pet-labels, .pet-character, .pet-status-text, .pet-expand-btn, .event-bubble {
-            -webkit-app-region: no-drag;
-        }
+  .cultivator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+  }
 
-        .pet-realm {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--gold-light);
-            margin-bottom: 8px;
-            text-shadow: 0 0 8px rgba(184, 134, 11, 0.3);
-        }
+  @keyframes breathe-closed {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.03); }
+  }
 
-        .pet-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 4px;
-        }
+  @keyframes breathe-circulate {
+    0%, 100% { transform: translateX(-50%) scale(1); filter: brightness(1); }
+    50% { transform: translateX(-50%) scale(1.05); filter: brightness(1.2); }
+  }
 
-        .pet-mini-bar {
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
+  @keyframes breakthrough-shake {
+    0%, 100% { transform: translateX(-50%) rotate(0deg); }
+    25% { transform: translateX(-50%) rotate(-2deg) scale(1.08); }
+    75% { transform: translateX(-50%) rotate(2deg) scale(1.08); }
+  }
 
-        .pet-mini-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
+  @keyframes disturbed-tremble {
+    0%, 100% { transform: translateX(-50%) translateX(0); }
+    25% { transform: translateX(-50%) translateX(-2px); }
+    75% { transform: translateX(-50%) translateX(2px); }
+  }
 
-        .pet-mini-fill.exp { background: linear-gradient(90deg, var(--jade), var(--jade-light)); }
-        .pet-mini-fill.hp { background: linear-gradient(90deg, var(--red), var(--red-light)); }
+  .cultivator .head {
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle at 40% 40%, #f5d0a9, #d4a574);
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 2;
+  }
 
-        /* 打坐小人 */
-        .pet-character {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 8px auto;
-        }
+  /* 闭眼状态 */
+  .state-closed .cultivator .head::before,
+  .state-closed .cultivator .head::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 1px;
+    background: #1a1a1a;
+    border-radius: 0;
+    top: 10px;
+  }
+  .state-closed .cultivator .head::before { left: 5px; }
+  .state-closed .cultivator .head::after { right: 5px; }
 
-        .cultivator {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 60px;
-            animation: breathe 3s ease-in-out infinite;
-        }
+  /* 睁眼状态（运功/受扰） */
+  .state-circulate .cultivator .head::before,
+  .state-circulate .cultivator .head::after,
+  .state-disturbed .cultivator .head::before,
+  .state-disturbed .cultivator .head::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 50%;
+    top: 9px;
+  }
+  .state-circulate .cultivator .head::before { left: 5px; }
+  .state-circulate .cultivator .head::after { right: 5px; }
+  .state-disturbed .cultivator .head::before { left: 5px; }
+  .state-disturbed .cultivator .head::after { right: 5px; }
 
-        @keyframes breathe {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.05); }
-        }
+  /* 突破时发光 */
+  .state-breakthrough .cultivator .head {
+    box-shadow: 0 0 15px rgba(218, 165, 32, 0.6), 0 2px 4px rgba(0,0,0,0.3);
+  }
 
-        .cultivator .head {
-            width: 24px;
-            height: 24px;
-            background: radial-gradient(circle at 40% 40%, #f5d0a9, #d4a574);
-            border-radius: 50%;
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            z-index: 2;
-        }
+  .cultivator .body {
+    width: 34px;
+    height: 26px;
+    background: linear-gradient(180deg, #4a6a8a, #2a3a5a);
+    border-radius: 8px 8px 4px 4px;
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
 
-        .cultivator .head::before,
-        .cultivator .head::after {
-            content: '';
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: #1a1a1a;
-            border-radius: 50%;
-            top: 9px;
-            animation: blink 4s ease-in-out infinite;
-        }
+  .cultivator .legs {
+    width: 42px;
+    height: 12px;
+    background: linear-gradient(180deg, #3a5060, #1a3040);
+    border-radius: 0 0 18px 18px;
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
 
-        .cultivator .head::before { left: 6px; }
-        .cultivator .head::after { right: 6px; }
+  .cultivator .arms {
+    width: 38px;
+    height: 7px;
+    background: linear-gradient(90deg, #4a6a8a, #2a3a5a);
+    border-radius: 4px;
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+  }
 
-        @keyframes blink {
-            0%, 96%, 100% { transform: scaleY(1); }
-            98% { transform: scaleY(0.1); }
-        }
+  .cultivator .arms::before,
+  .cultivator .arms::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: #f5d0a9;
+    border-radius: 50%;
+    top: -1px;
+  }
+  .cultivator .arms::before { left: -2px; }
+  .cultivator .arms::after { right: -2px; }
 
-        .cultivator .body {
-            width: 36px;
-            height: 28px;
-            background: linear-gradient(180deg, #5a3a2a, #3a2518);
-            border-radius: 10px 10px 4px 4px;
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-        }
+  /* 真气光晕 - 不同状态不同颜色 */
+  .aura {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
 
-        .cultivator .legs {
-            width: 44px;
-            height: 14px;
-            background: linear-gradient(180deg, #4a2a18, #2a1508);
-            border-radius: 0 0 20px 20px;
-            position: absolute;
-            bottom: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-        }
+  .state-closed .aura {
+    border: 1px solid rgba(100, 200, 150, 0.2);
+    animation: auraPulse-closed 3s ease-in-out infinite;
+  }
 
-        .cultivator .arms {
-            width: 40px;
-            height: 8px;
-            background: linear-gradient(90deg, #5a3a2a, #3a2518);
-            border-radius: 4px;
-            position: absolute;
-            top: 26px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 3;
-        }
+  .state-circulate .aura {
+    border: 2px solid rgba(0, 255, 150, 0.4);
+    animation: auraPulse-circulate 2s ease-in-out infinite;
+  }
 
-        .cultivator .arms::before,
-        .cultivator .arms::after {
-            content: '';
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #f5d0a9;
-            border-radius: 50%;
-            top: -1px;
-        }
+  .state-breakthrough .aura {
+    border: 3px solid rgba(218, 165, 32, 0.6);
+    animation: auraPulse-breakthrough 0.5s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(218, 165, 32, 0.3);
+  }
 
-        .cultivator .arms::before { left: -2px; }
-        .cultivator .arms::after { right: -2px; }
+  .state-disturbed .aura {
+    border: 1px solid rgba(179, 57, 57, 0.3);
+    animation: auraPulse-disturbed 0.3s ease-in-out infinite;
+  }
 
-        /* 真气光晕 */
-        .aura {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 2px solid rgba(0, 255, 136, 0.3);
-            animation: auraPulse 2s ease-in-out infinite;
-            pointer-events: none;
-        }
+  @keyframes auraPulse-closed {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.1; }
+  }
 
-        .aura::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px; height: 60px;
-            border-radius: 50%;
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            animation: auraPulse 2s ease-in-out infinite 0.5s;
-        }
+  @keyframes auraPulse-circulate {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.2; }
+  }
 
-        @keyframes auraPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
-            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.1; }
-        }
+  @keyframes auraPulse-breakthrough {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+    50% { transform: translate(-50%, -50%) scale(1.6); opacity: 0.4; }
+  }
 
-        /* 事件气泡 */
-        .event-bubble {
-            position: absolute;
-            bottom: 110px;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            background: var(--paper);
-            border: 2px solid var(--gold);
-            border-radius: 12px;
-            padding: 10px 14px;
-            min-width: 180px;
-            max-width: 220px;
-            font-size: 13px;
-            line-height: 1.5;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.4s ease;
-            z-index: 10;
-        }
+  @keyframes auraPulse-disturbed {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+    50% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.1; }
+  }
 
-        .event-bubble.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
+  /* 状态标签 */
+  .state-label {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
 
-        .event-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid var(--gold);
-        }
+  .cultivator-wrapper:hover .state-label { opacity: 1; }
 
-        .event-bubble .bubble-title {
-            font-weight: 700;
-            color: var(--red);
-            margin-bottom: 4px;
-            font-size: 14px;
-        }
+  /* 事件气泡 */
+  .event-bubble {
+    position: absolute;
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(245, 240, 232, 0.97);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    padding: 14px 16px;
+    width: 260px;
+    font-size: 13px;
+    line-height: 1.6;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 15px rgba(184, 134, 11, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s ease;
+    z-index: 100;
+    max-height: 0;
+    overflow: hidden;
+  }
 
-        .event-bubble .bubble-desc {
-            color: #555;
-            font-size: 12px;
-        }
+  .event-bubble.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+    max-height: 400px;
+  }
 
-        .event-bubble .bubble-reward {
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px dashed var(--border);
-            font-size: 12px;
-            color: var(--jade);
-        }
+  .event-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid var(--gold);
+  }
 
-        .pet-status-text {
-            font-size: 12px;
-            color: rgba(255,255,255,0.5);
-            margin-top: 8px;
-            font-style: italic;
-        }
+  .bubble-title {
+    font-weight: 700;
+    color: var(--red);
+    font-size: 15px;
+    margin-bottom: 6px;
+    text-align: center;
+  }
 
-        .pet-expand-btn {
-            margin-top: 10px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.2);
-            color: rgba(255,255,255,0.6);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
+  .bubble-desc {
+    color: #555;
+    margin-bottom: 10px;
+    text-align: center;
+  }
 
-        .pet-expand-btn:hover {
-            border-color: var(--gold);
-            color: var(--gold-light);
-        }
+  .bubble-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
 
-        /* 右键菜单提示 */
-        .pet-hint {
-            font-size: 10px;
-            color: rgba(255,255,255,0.3);
-            margin-top: 6px;
-        }
-    </style>
+  .type-daily { background: var(--blue); color: #fff; }
+  .type-qi { background: var(--purple); color: #fff; }
+  .type-crisis { background: var(--red); color: #fff; }
+  .type-breakthrough { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #fff; }
+
+  /* 3选1选择面板 */
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .choice-btn {
+    background: rgba(255,255,255,0.5);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    color: var(--ink);
+  }
+
+  .choice-btn:hover {
+    background: rgba(184, 134, 11, 0.1);
+    border-color: var(--gold);
+  }
+
+  .choice-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .choice-label {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    text-align: center;
+    line-height: 20px;
+    margin-right: 6px;
+  }
+
+  .choice-result {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-size: 12px;
+    color: var(--jade);
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* 突破特效覆盖层 */
+  .breakthrough-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 999;
+    display: none;
+  }
+
+  .breakthrough-overlay.active {
+    display: block;
+    animation: breakthroughFlash 2s ease-out;
+  }
+
+  @keyframes breakthroughFlash {
+    0% { background: rgba(218, 165, 32, 0.3); }
+    50% { background: rgba(218, 165, 32, 0.1); }
+    100% { background: transparent; }
+  }
+
+  .breakthrough-text {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--gold-light);
+    text-shadow: 0 0 20px rgba(218, 165, 32, 0.8);
+    opacity: 0;
+    animation: textRise 2s ease-out forwards;
+  }
+
+  @keyframes textRise {
+    0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    30% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    70% { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+  }
+
+  /* 隐藏属性提示（鼠标悬停时显示） */
+  .hidden-stats {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: rgba(0,0,0,0.8);
+    border: 1px solid rgba(184, 134, 11, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+
+  .cultivator-wrapper:hover .hidden-stats {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .hidden-stats .stat-line {
+    margin-bottom: 2px;
+  }
+
+  .hidden-stats .stat-line:last-child { margin-bottom: 0; }
+</style>
 </head>
 <body>
-    <div class="pet-card" id="petCard">
-        <div class="pet-realm" id="petRealm">凡人</div>
-        <div class="pet-labels">
-            <span>修为</span>
-            <span id="petExpText">0 / 100</span>
-        </div>
-        <div class="pet-mini-bar">
-            <div class="pet-mini-fill exp" id="petExpBar" style="width: 0%"></div>
-        </div>
-        <div class="pet-labels">
-            <span>气血</span>
-            <span id="petHpText">100 / 100</span>
-        </div>
-        <div class="pet-mini-bar">
-            <div class="pet-mini-fill hp" id="petHpBar" style="width: 100%"></div>
-        </div>
 
-        <div class="pet-character">
-            <div class="cultivator">
-                <div class="head"></div>
-                <div class="body"></div>
-                <div class="legs"></div>
-                <div class="arms"></div>
-            </div>
-            <div class="aura"></div>
-            <div class="event-bubble" id="eventBubble"></div>
-        </div>
+<div class="breakthrough-overlay" id="breakthroughOverlay">
+  <div class="breakthrough-text" id="breakthroughText"></div>
+</div>
 
-        <div class="pet-status-text" id="petStatus">正在打坐修炼...</div>
-        <button class="pet-expand-btn" onclick="openFullVersion()">在浏览器打开完整版</button>
-        <div class="pet-hint">右键可显示菜单</div>
-    </div>
+<div class="cultivator-wrapper state-closed" id="cultivatorWrapper">
+  <div class="hidden-stats" id="hiddenStats"></div>
+  <div class="cultivator">
+    <div class="head"></div>
+    <div class="body"></div>
+    <div class="legs"></div>
+    <div class="arms"></div>
+  </div>
+  <div class="aura"></div>
+  <div class="state-label" id="stateLabel">闭目修炼</div>
 
-    <script>
-        // ==================== 游戏配置 ====================
-        const REALMS = [
-            { name: '凡人', expNeed: 100, hpBonus: 0, mpBonus: 0, atkBonus: 0, defBonus: 0, agiBonus: 0 },
-            { name: '三流高手', expNeed: 300, hpBonus: 50, mpBonus: 30, atkBonus: 5, defBonus: 3, agiBonus: 3 },
-            { name: '二流高手', expNeed: 800, hpBonus: 100, mpBonus: 60, atkBonus: 10, defBonus: 6, agiBonus: 6 },
-            { name: '一流高手', expNeed: 2000, hpBonus: 200, mpBonus: 120, atkBonus: 20, defBonus: 12, agiBonus: 12 },
-            { name: '宗师', expNeed: 5000, hpBonus: 400, mpBonus: 250, atkBonus: 40, defBonus: 25, agiBonus: 25 },
-            { name: '大宗师', expNeed: 12000, hpBonus: 800, mpBonus: 500, atkBonus: 80, defBonus: 50, agiBonus: 50 },
-            { name: '先天境界', expNeed: 30000, hpBonus: 1500, mpBonus: 1000, atkBonus: 150, defBonus: 100, agiBonus: 100 },
-            { name: '天人合一', expNeed: 999999, hpBonus: 3000, mpBonus: 2000, atkBonus: 300, defBonus: 200, agiBonus: 200 }
-        ];
+  <div class="event-bubble" id="eventBubble">
+    <div class="bubble-title" id="bubbleTitle"></div>
+    <div style="text-align:center;"><span class="bubble-type" id="bubbleType"></span></div>
+    <div class="bubble-desc" id="bubbleDesc"></div>
+    <div class="choices" id="choices"></div>
+    <div class="choice-result" id="choiceResult"></div>
+  </div>
+</div>
 
-        const SKILLS = {
-            white: [
-                { name: '太祖长拳', desc: '少林入门拳法，刚猛朴实', hp: 5, mp: 0, atk: 3, def: 2, agi: 1 },
-                { name: '基础剑法', desc: '华山派入门剑术', hp: 0, mp: 5, atk: 4, def: 1, agi: 2 },
-                { name: '庄稼把式', desc: '庄稼汉打架的招式，意外地实用', hp: 10, mp: 0, atk: 2, def: 3, agi: 0 },
-                { name: '五虎断门刀', desc: '江湖上常见的刀法', hp: 0, mp: 0, atk: 5, def: 1, agi: 1 },
-                { name: '草上飞', desc: '轻功入门，速度微增', hp: 0, mp: 3, atk: 0, def: 0, agi: 5 },
-                { name: '铁砂掌', desc: '手掌如铁，掌力惊人', hp: 8, mp: 0, atk: 4, def: 0, agi: 0 },
-                { name: '六合枪', desc: '枪法基础，攻守兼备', hp: 5, mp: 0, atk: 3, def: 3, agi: 1 },
-                { name: '伏虎棍', desc: '棍法入门，力大势沉', hp: 10, mp: 0, atk: 4, def: 2, agi: 0 }
-            ],
-            blue: [
-                { name: '八卦掌', desc: '游身八卦，掌法玄妙', hp: 20, mp: 15, atk: 8, def: 6, agi: 8 },
-                { name: '鸳鸯腿', desc: '腿法凌厉，连环不绝', hp: 10, mp: 10, atk: 10, def: 3, agi: 10 },
-                { name: '华山剑法', desc: '华山派嫡传剑法，剑气纵横', hp: 15, mp: 20, atk: 12, def: 4, agi: 6 },
-                { name: '铁布衫', desc: '横练功夫，刀枪不入', hp: 40, mp: 10, atk: 2, def: 15, agi: 0 },
-                { name: '金雁功', desc: '全真教轻功，身轻如燕', hp: 10, mp: 30, atk: 3, def: 3, agi: 15 },
-                { name: '摧心掌', desc: '青城派秘传，掌力直透脏腑', hp: 15, mp: 15, atk: 15, def: 3, agi: 4 },
-                { name: '回风拂柳剑', desc: '峨眉剑法，柔中带刚', hp: 10, mp: 20, atk: 10, def: 8, agi: 8 },
-                { name: '寒冰真气', desc: '玄冥寒毒，阴寒刺骨', hp: 20, mp: 40, atk: 15, def: 5, agi: 3 }
-            ],
-            purple: [
-                { name: '降龙十八掌·残篇', desc: '丐帮绝学，刚猛无俦', hp: 50, mp: 50, atk: 40, def: 15, agi: 10 },
-                { name: '六脉神剑·残篇', desc: '大理段氏绝学，剑气无形', hp: 30, mp: 80, atk: 50, def: 5, agi: 15 },
-                { name: '九阴白骨爪', desc: '九阴真经所载，阴毒狠辣', hp: 40, mp: 40, atk: 45, def: 10, agi: 20 },
-                { name: '独孤九剑·残篇', desc: '独孤求败所创，破尽天下武学', hp: 20, mp: 40, atk: 55, def: 20, agi: 25 },
-                { name: '乾坤大挪移', desc: '明教镇教之宝，借力打力', hp: 60, mp: 60, atk: 25, def: 40, agi: 15 },
-                { name: '北冥神功', desc: '逍遥派绝学，吸人内力', hp: 40, mp: 100, atk: 30, def: 20, agi: 15 },
-                { name: '小无相功', desc: '逍遥派心法，无形无相', hp: 50, mp: 80, atk: 35, def: 25, agi: 20 },
-                { name: '黯然销魂掌', desc: '杨过所创，黯然神伤', hp: 60, mp: 50, atk: 45, def: 15, agi: 20 }
-            ],
-            gold: [
-                { name: '九阴真经', desc: '黄裳所著，武林至尊宝典', hp: 200, mp: 200, atk: 100, def: 80, agi: 60 },
-                { name: '九阳神功', desc: '达摩祖师所留，至刚至阳', hp: 300, mp: 150, atk: 80, def: 100, agi: 50 },
-                { name: '易筋经', desc: '少林镇寺之宝，洗髓伐骨', hp: 250, mp: 250, atk: 60, def: 120, agi: 70 },
-                { name: '太玄经', desc: '侠客岛神秘武学，妙参造化', hp: 200, mp: 300, atk: 120, def: 60, agi: 100 },
-                { name: '独孤九剑', desc: '完整版，天下无敌', hp: 150, mp: 200, atk: 150, def: 80, agi: 120 },
-                { name: '六脉神剑', desc: '完整版，六脉齐发，剑气冲霄', hp: 150, mp: 300, atk: 180, def: 50, agi: 100 },
-                { name: '葵花宝典', desc: '前朝宦官所创，诡异莫测', hp: 200, mp: 250, atk: 200, def: 40, agi: 200 },
-                { name: '如来神掌', desc: '佛门至高武学，掌力通神', hp: 400, mp: 200, atk: 200, def: 150, agi: 50 }
-            ]
-        };
+<script>
+// ==================== 修仙配置 ====================
+const REALMS = [
+  { name: '炼气期', expNeed: 100, desc: '引气入体，初窥仙途' },
+  { name: '筑基期', expNeed: 500, desc: '根基稳固，方可大道' },
+  { name: '金丹期', expNeed: 2000, desc: '金丹一成，寿命倍增' },
+  { name: '元婴期', expNeed: 8000, desc: '元婴出窍，神游太虚' },
+  { name: '化神期', expNeed: 30000, desc: '神识通天，感悟法则' },
+  { name: '合体期', expNeed: 100000, desc: '身魂合一，万法归宗' },
+  { name: '大乘期', expNeed: 500000, desc: '大乘圆满，半步飞升' },
+  { name: '渡劫期', expNeed: 2000000, desc: '逆天而行，九死一生' },
+  { name: '真仙', expNeed: 999999999, desc: '飞升仙界，万古不朽' }
+];
 
-        const EVENTS = {
-            qi: [
-                { title: '跌落悬崖', desc: '你失足跌落悬崖，命不该绝，摔入一潭碧水。', success: '潭底竟有一具白骨，手中握着一本秘籍！', fail: '虽然保住性命，但摔得七荤八素，修为受损。', successRate: 0.7, rewardType: 'skill', rewardValue: 1 },
-                { title: '路遇高人', desc: '山间小路，一位白发老者拦住了你的去路。', success: '老者见你有缘，传了你三招两式，受益匪浅。', fail: '老者摇摇头离去，只留下一句"资质平平"。', successRate: 0.6, rewardType: 'exp', rewardValue: 2 },
-                { title: '山洞探险', desc: '你追踪一只白猿，发现了一个隐蔽的山洞。', success: '洞内珠光宝气，还有前人遗留的武学典籍！', fail: '洞内空无一物，只有几只蝙蝠，你扫兴而归。', successRate: 0.5, rewardType: 'mixed', rewardValue: 1.5 },
-                { title: '醉酒误入', desc: '你醉酒后误入一片竹林，迷失了方向。', success: '竹林深处竟有一座茅庐，主人是一位隐世高人。', fail: '你在竹林里转了一整夜，又累又饿。', successRate: 0.65, rewardType: 'skill', rewardValue: 0.8 },
-                { title: '救下神秘老人', desc: '你救下了一位被山贼围攻的神秘老人。', success: '老人感激不尽，将毕生所学倾囊相授。', fail: '老人伤势过重，只留下一些银两作为谢礼。', successRate: 0.8, rewardType: 'mixed', rewardValue: 2 },
-                { title: '古墓寻宝', desc: '你听说附近有一座古墓，内有奇珍异宝。', success: '你在墓中发现了一卷泛黄的武学残篇！', fail: '古墓机关重重，你险些丧命，空手而归。', successRate: 0.45, rewardType: 'skill', rewardValue: 1.2 },
-                { title: '观海悟道', desc: '你在海边静坐，涛声阵阵，心境空明。', success: '突有所悟，内力运转如海潮澎湃，修为大涨！', fail: '静坐半日，除了被蚊子叮了一身包，一无所获。', successRate: 0.75, rewardType: 'exp', rewardValue: 1.5 },
-                { title: '击败神秘剑客', desc: '一位蒙面剑客向你挑战，招招致命。', success: '你险胜半招，剑客留下剑谱大笑离去。', fail: '你败下阵来，剑客摇头说"十年后我再来"。', successRate: 0.55, rewardType: 'skill', rewardValue: 1 }
-            ],
-            crisis: [
-                { title: '仇家追杀', desc: '你的仇家带着人马找上门来！', success: '你以少敌多，浴血奋战，竟杀出重围！', fail: '你双拳难敌四手，被打落山崖，身受重伤。', successRate: 0.4, rewardType: 'exp', rewardValue: 3 },
-                { title: '走火入魔', desc: '修炼时气息逆行，走火入魔！', success: '你强行逆转经脉，竟因祸得福，功力大增！', fail: '你内力大损，经脉受损，需静养数月。', successRate: 0.35, rewardType: 'mixed', rewardValue: 2.5 },
-                { title: '中了奇毒', desc: '你在客栈吃饭时中了别人的暗算。', success: '你以毒攻毒，不仅解了毒，还练成了毒功！', fail: '毒性发作，你花了大量银两才买到解药。', successRate: 0.45, rewardType: 'skill', rewardValue: 0.8 },
-                { title: '被山贼打劫', desc: '一伙山贼拦住了你的去路。', success: '你大展神威，山贼头目跪地求饶，献上宝物。', fail: '你寡不敌众，被打晕后洗劫一空。', successRate: 0.5, rewardType: 'gold', rewardValue: 1.5 },
-                { title: '误入禁地', desc: '你误入了一处武林禁地，阵法森严。', success: '你九死一生闯出阵法，竟来到了一处秘境。', fail: '被困在阵中三日三夜，出来时狼狈不堪。', successRate: 0.3, rewardType: 'mixed', rewardValue: 3 },
-                { title: '比武招亲', desc: '你被卷入了一场比武招亲，不得不战。', success: '你力挫群雄，赢得了芳心，还获得了岳家武学。', fail: '你被一位高手打下擂台，成了江湖笑柄。', successRate: 0.5, rewardType: 'skill', rewardValue: 1 }
-            ],
-            daily: [
-                { title: '打坐修炼', desc: '你寻了一处清静之地，打坐修炼。', success: '气息通畅，周天运转，修为精进。', fail: '心神不宁，难以入定，收效甚微。', successRate: 0.9, rewardType: 'exp', rewardValue: 0.5 },
-                { title: '行侠仗义', desc: '你路见不平，拔刀相助。', success: '为民除害，百姓感恩，赠你银两。', fail: '对方后台强硬，你惹上了麻烦。', successRate: 0.85, rewardType: 'gold', rewardValue: 0.8 },
-                { title: '比武切磋', desc: '你与一位同道中人切磋武艺。', success: '胜负之间，你领悟了新的招式。', fail: '输了一招，但你总结了教训。', successRate: 0.8, rewardType: 'exp', rewardValue: 0.7 },
-                { title: '采药炼丹', desc: '你上山采药，准备炼制丹药。', success: '采得珍稀药材，炼成丹药，服用后气血大增。', fail: '药材被野兽糟蹋，你只能空手而归。', successRate: 0.75, rewardType: 'hp', rewardValue: 1 },
-                { title: '闭关领悟', desc: '你闭关三日，苦思武学难题。', success: '灵光一闪，困扰多年的瓶颈迎刃而解。', fail: '苦思无果，反而更加困惑。', successRate: 0.7, rewardType: 'exp', rewardValue: 1 },
-                { title: '江湖游历', desc: '你游历四方，增长见识。', success: '见识了各门各派的武功，受益匪浅。', fail: '一路颠簸，风餐露宿，疲惫不堪。', successRate: 0.85, rewardType: 'exp', rewardValue: 0.6 },
-                { title: '传授武艺', desc: '一位少年慕名而来，请你指点。', success: '教学相长，你也在传授中有了新的领悟。', fail: '少年资质太差，你教得心力交瘁。', successRate: 0.8, rewardType: 'exp', rewardValue: 0.5 },
-                { title: '夜观星象', desc: '你仰望星空，感悟天地之道。', success: '星象暗藏玄机，你对内功心法有了新的理解。', fail: '看了一晚上星星，脖子酸了，什么也没悟到。', successRate: 0.75, rewardType: 'mp', rewardValue: 1 }
-            ]
-        };
+const SPIRITUAL_ROOTS = {
+  heavenly: { name: '天灵根', growth: 2.0, desc: '修仙奇才，万中无一' },
+  earth: { name: '地灵根', growth: 1.5, desc: '资质上佳，修行顺畅' },
+  mixed: { name: '杂灵根', growth: 1.0, desc: '资质平平，勤能补拙' },
+  mutated: { name: '变异灵根', growth: 1.8, desc: '异变之体，祸福相依' }
+};
 
-        // ==================== 游戏状态 ====================
-        let player = {
-            name: '无名侠客',
-            realm: 0,
-            exp: 0,
-            hp: 100, maxHp: 100,
-            mp: 50, maxMp: 50,
-            atk: 10, def: 5, agi: 5,
-            gold: 0,
-            skills: [],
-            logs: [],
-            totalPlayTime: 0,
-            lastSave: Date.now(),
-            nextEventTime: 0,
-            eventCount: 0
-        };
+const MIND_STATES = {
+  stable: { name: '心境平稳', color: '#3d7a37', eventBonus: 0 },
+  turbulent: { name: '心境动荡', color: '#b8860b', eventBonus: -0.1 },
+  enlightenment: { name: '顿悟状态', color: '#6b3a7d', eventBonus: 0.2 },
+  demon: { name: '入魔边缘', color: '#b33939', eventBonus: -0.3 }
+};
 
-        let gameTimer = null;
-        let eventTimer = null;
-        let startTime = Date.now();
+const ELEMENTS = ['金', '木', '水', '火', '土'];
 
-        // ==================== 初始化与存档 ====================
-        function loadGame() {
-            const saved = localStorage.getItem('jianghu_idle_pet_save');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    const now = Date.now();
-                    const offlineTime = Math.floor((now - data.lastSave) / 1000);
-                    
-                    player = data;
-                    
-                    if (offlineTime > 10) {
-                        processOfflineEvents(offlineTime);
-                    }
-                    
-                    updateUI();
-                    showPetBubble('离线挂机', `你离线了 ${formatTime(offlineTime)}，期间发生了一些事情。`, [], true);
-                } catch (e) {
-                    console.error('存档加载失败:', e);
-                    initNewGame();
-                }
-            } else {
-                initNewGame();
-            }
+// ==================== 事件系统（每个事件3个选择）====================
+const XIUZHEN_EVENTS = {
+  daily: [
+    {
+      id: 'spiritual_flux',
+      title: '灵气逆流',
+      desc: '修炼时灵气突然逆流，经脉隐隐作痛。',
+      type: 'daily',
+      choices: [
+        { id: 'A', text: '强行镇压（高风险高回报）', risk: 'high', effect: 'exp +30~50, 心境可能动荡' },
+        { id: 'B', text: '顺势引导（稳定）', risk: 'low', effect: 'exp +15~25, 心境平稳' },
+        { id: 'C', text: '暂停修炼（降低风险）', risk: 'none', effect: 'exp +5, 心境恢复' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          if (Math.random() < 0.6) {
+            return { success: true, exp: randomRange(30, 50), mindShift: 'turbulent', msg: '你以雷霆手段镇压逆流，修为大涨，但心境略显浮躁。' };
+          } else {
+            return { success: false, exp: -10, hp: -20, mindShift: 'demon', msg: '镇压失败，经脉受损，心魔暗生。' };
+          }
+        } else if (choice === 'B') {
+          return { success: true, exp: randomRange(15, 25), mindShift: 'stable', msg: '你顺水推舟，灵气温顺如绵羊，修为稳步提升。' };
+        } else {
+          return { success: true, exp: 5, mindShift: 'stable', msg: '你明智地选择暂避锋芒，待灵气平息后继续修炼。' };
         }
-
-        function initNewGame() {
-            player = {
-                name: '无名侠客',
-                realm: 0,
-                exp: 0,
-                hp: 100, maxHp: 100,
-                mp: 50, maxMp: 50,
-                atk: 10, def: 5, agi: 5,
-                gold: 0,
-                skills: [],
-                logs: [],
-                totalPlayTime: 0,
-                lastSave: Date.now(),
-                nextEventTime: Date.now() + randomRange(5000, 15000),
-                eventCount: 0
-            };
-            saveGame();
-            updateUI();
-            showPetBubble('初入江湖', '你踏入江湖，开始了你的修炼之路。', [], true);
+      }
+    },
+    {
+      id: 'heart_demon',
+      title: '心魔侵扰',
+      desc: '闭关时，往日遗憾化作幻象，缠绕心神。',
+      type: 'daily',
+      choices: [
+        { id: 'A', text: '直面心魔（破而后立）', risk: 'high', effect: '顿悟概率+30%' },
+        { id: 'B', text: '诵念清心咒（保守）', risk: 'low', effect: '心境恢复平稳' },
+        { id: 'C', text: '以毒攻毒，引入幻境（极险）', risk: 'extreme', effect: '顿悟/入魔二选一' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          if (Math.random() < 0.5) {
+            return { success: true, exp: randomRange(40, 60), mindShift: 'enlightenment', msg: '你破茧而出，心魔尽消，顿悟大道！' };
+          } else {
+            return { success: false, exp: -20, mindShift: 'demon', msg: '心魔反噬，你险些迷失自我。' };
+          }
+        } else if (choice === 'B') {
+          return { success: true, exp: 10, mindShift: 'stable', msg: '清心咒如甘露，洗涤心神。' };
+        } else {
+          if (Math.random() < 0.3) {
+            return { success: true, exp: randomRange(80, 120), mindShift: 'enlightenment', msg: '置之死地而后生，你踏入了顿悟之境！' };
+          } else {
+            return { success: false, exp: -50, mindShift: 'demon', msg: '引魔入体，你陷入了入魔边缘！' };
+          }
         }
-
-        function saveGame() {
-            player.lastSave = Date.now();
-            localStorage.setItem('jianghu_idle_pet_save', JSON.stringify(player));
+      }
+    },
+    {
+      id: 'sudden_insight',
+      title: '顿悟机缘',
+      desc: '观云卷云舒，你忽有所感，似有大道之光照入灵台。',
+      type: 'daily',
+      choices: [
+        { id: 'A', text: '全力感悟，冲击瓶颈', risk: 'medium', effect: '突破概率+50%' },
+        { id: 'B', text: '徐徐图之，巩固根基', risk: 'low', effect: '修为+20，根基稳固' },
+        { id: 'C', text: '记录感悟，留待后用', risk: 'none', effect: '气运+5，后续突破+10%' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          if (Math.random() < 0.5) {
+            return { success: true, exp: randomRange(60, 100), mindShift: 'enlightenment', msg: '灵光一闪，瓶颈松动！' };
+          } else {
+            return { success: false, exp: 20, mindShift: 'stable', msg: '感悟虽深，但时机未到，略有收获。' };
+          }
+        } else if (choice === 'B') {
+          return { success: true, exp: 20, mindShift: 'stable', msg: '你稳扎稳打，根基更加扎实。' };
+        } else {
+          return { success: true, luck: 5, msg: '你将感悟刻入玉简，气运悄然提升。' };
         }
-
-        function processOfflineEvents(offlineSeconds) {
-            let elapsed = 0;
-            while (elapsed < offlineSeconds) {
-                const interval = randomRange(5, 15);
-                elapsed += interval;
-                if (elapsed > offlineSeconds) break;
-                
-                const eventType = pickRandom(['qi', 'crisis', 'daily']);
-                const eventPool = EVENTS[eventType];
-                const event = eventPool[Math.floor(Math.random() * eventPool.length)];
-                const success = Math.random() < event.successRate;
-                
-                const rewards = calculateReward(event, success, true);
-                applyRewards(rewards);
-                
-                player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.05));
-                player.mp = Math.min(player.maxMp, player.mp + Math.floor(player.maxMp * 0.05));
-                player.eventCount++;
-            }
-            player.totalPlayTime += offlineSeconds;
-            checkRealmBreakthrough();
+      }
+    }
+  ],
+  qi: [
+    {
+      id: 'immortal_guidance',
+      title: '仙人指路',
+      desc: '雾中走来一位白发老者，自称是云游散仙。',
+      type: 'qi',
+      choices: [
+        { id: 'A', text: '跪求指点，奉上全部灵石', risk: 'medium', effect: '高概率获得仙法/灵宝' },
+        { id: 'B', text: '谨慎试探，先观察虚实', risk: 'low', effect: '可能获得部分指点' },
+        { id: 'C', text: '婉言谢绝，小心有诈', risk: 'none', effect: '安全，但可能错失机缘' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          if (Math.random() < 0.7) {
+            const skill = generateSpiritualArt();
+            return { success: true, skill: skill, gold: -player.gold, msg: `仙人抚顶，授你「${skill.name}」！` };
+          } else {
+            return { success: false, gold: -player.gold, msg: '老者收下灵石后消失无踪，你被骗了。' };
+          }
+        } else if (choice === 'B') {
+          if (Math.random() < 0.6) {
+            return { success: true, exp: randomRange(50, 80), msg: '老者见你心性沉稳，传了你半部心法。' };
+          } else {
+            return { success: false, msg: '老者摇头离去，说你疑心太重，难成大器。' };
+          }
+        } else {
+          return { success: true, msg: '你目送老者离去，虽无所得，但亦无失。' };
         }
-
-        // ==================== 实时事件系统 ====================
-        function scheduleNextEvent() {
-            const delay = randomRange(5000, 15000);
-            player.nextEventTime = Date.now() + delay;
-            
-            if (eventTimer) clearTimeout(eventTimer);
-            eventTimer = setTimeout(() => {
-                triggerEvent();
-                scheduleNextEvent();
-            }, delay);
+      }
+    },
+    {
+      id: 'ancient_ruin',
+      title: '远古遗迹',
+      desc: '地震后，一座上古洞府露出地面，禁制森严。',
+      type: 'qi',
+      choices: [
+        { id: 'A', text: '强行闯入（九死一生）', risk: 'extreme', effect: '远古灵宝/身死道消' },
+        { id: 'B', text: '研究禁制，徐徐破解', risk: 'medium', effect: '灵药/功法残篇' },
+        { id: 'C', text: '在外围采集散落的灵草', risk: 'low', effect: '安全获得灵药' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          if (Math.random() < 0.3) {
+            const artifact = generateArtifact();
+            return { success: true, artifact: artifact, msg: `你闯过生死关，获得远古灵宝「${artifact.name}」！` };
+          } else {
+            return { success: false, hp: -player.maxHp * 0.5, msg: '禁制爆发，你重伤逃遁，修为大跌。' };
+          }
+        } else if (choice === 'B') {
+          if (Math.random() < 0.7) {
+            const herb = generateHerb();
+            return { success: true, herb: herb, exp: randomRange(30, 50), msg: `你破解了部分禁制，获得「${herb.name}」和心法残篇。` };
+          } else {
+            return { success: false, exp: -20, msg: '禁制反噬，你受了轻伤。' };
+          }
+        } else {
+          const herb = generateHerb();
+          return { success: true, herb: herb, msg: `你在安全区域采集到「${herb.name}」，虽无大惊喜，但胜在安稳。` };
         }
-
-        function triggerEvent() {
-            const eventType = pickRandom(['qi', 'crisis', 'daily']);
-            const eventPool = EVENTS[eventType];
-            const event = eventPool[Math.floor(Math.random() * eventPool.length)];
-            const success = Math.random() < event.successRate;
-            
-            const rewards = calculateReward(event, success, false);
-            applyRewards(rewards);
-            
-            player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.02));
-            player.mp = Math.min(player.maxMp, player.mp + Math.floor(player.maxMp * 0.02));
-            
-            showPetBubble(event.title, success ? event.success : event.fail, rewards, success);
-            
-            player.eventCount++;
-            checkRealmBreakthrough();
-            updateUI();
-            saveGame();
+      }
+    }
+  ],
+  crisis: [
+    {
+      id: 'demonic_invasion',
+      title: '魔修来袭',
+      desc: '一位魔修发现你的洞府，欲夺你灵根炼药！',
+      type: 'crisis',
+      choices: [
+        { id: 'A', text: '拼死一战（可能陨落）', risk: 'extreme', effect: '击杀/重伤/陨落' },
+        { id: 'B', text: '弃洞逃遁，保全性命', risk: 'low', effect: '失去洞府，但存活' },
+        { id: 'C', text: '以灵石贿赂，求其放过', risk: 'medium', effect: '破财消灾/贪得无厌' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          const winChance = (player.realm + 1) * 0.15 + player.luck * 0.01;
+          if (Math.random() < winChance) {
+            return { success: true, exp: randomRange(100, 200), gold: randomRange(50, 150), msg: '你浴血奋战，反杀魔修，获得了他的储物袋！' };
+          } else {
+            return { success: false, hp: -player.maxHp * 0.8, msg: '你不敌魔修，重伤垂死，靠秘法逃遁。' };
+          }
+        } else if (choice === 'B') {
+          return { success: true, msg: '你果断放弃洞府，魔修追之不及，保住了性命。' };
+        } else {
+          if (Math.random() < 0.5) {
+            return { success: true, gold: -Math.floor(player.gold * 0.3), msg: '魔修收下灵石，冷笑离去。' };
+          } else {
+            return { success: false, gold: -Math.floor(player.gold * 0.5), hp: -player.maxHp * 0.3, msg: '魔修贪得无厌，收了灵石还要取你性命！' };
+          }
         }
-
-        function calculateReward(event, success, isOffline) {
-            const rewards = [];
-            const multiplier = isOffline ? 0.5 : 1;
-            const realmMult = 1 + player.realm * 0.2;
-            
-            if (!success) {
-                if (event.rewardType === 'exp') {
-                    rewards.push({ type: 'exp', value: -Math.floor(10 * event.rewardValue * realmMult), text: '修为 -' });
-                }
-                if (Math.random() < 0.5) {
-                    rewards.push({ type: 'hp', value: -Math.floor(20 * realmMult), text: '气血 -' });
-                }
-                return rewards;
-            }
-            
-            switch (event.rewardType) {
-                case 'exp':
-                    rewards.push({ type: 'exp', value: Math.floor(20 * event.rewardValue * realmMult * multiplier), text: '修为 +' });
-                    break;
-                case 'gold':
-                    rewards.push({ type: 'gold', value: Math.floor(50 * event.rewardValue * realmMult * multiplier), text: '银两 +' });
-                    break;
-                case 'hp':
-                    rewards.push({ type: 'hp', value: Math.floor(30 * event.rewardValue * realmMult * multiplier), text: '气血 +' });
-                    break;
-                case 'mp':
-                    rewards.push({ type: 'mp', value: Math.floor(30 * event.rewardValue * realmMult * multiplier), text: '内力 +' });
-                    break;
-                case 'skill': {
-                    const skill = generateSkill(event.rewardValue);
-                    if (skill) rewards.push({ type: 'skill', tier: skill.tier, name: skill.data.name, skill: skill.data, text: '获得武学' });
-                    break;
-                }
-                case 'mixed': {
-                    const roll = Math.random();
-                    if (roll < 0.3) {
-                        const skill = generateSkill(event.rewardValue * 0.8);
-                        if (skill) rewards.push({ type: 'skill', tier: skill.tier, name: skill.data.name, skill: skill.data, text: '获得武学' });
-                    } else if (roll < 0.6) {
-                        rewards.push({ type: 'exp', value: Math.floor(30 * event.rewardValue * realmMult * multiplier), text: '修为 +' });
-                    } else if (roll < 0.8) {
-                        rewards.push({ type: 'gold', value: Math.floor(80 * event.rewardValue * realmMult * multiplier), text: '银两 +' });
-                    } else {
-                        rewards.push({ type: 'hp', value: Math.floor(20 * event.rewardValue * realmMult * multiplier), text: '气血 +' });
-                        rewards.push({ type: 'mp', value: Math.floor(20 * event.rewardValue * realmMult * multiplier), text: '内力 +' });
-                    }
-                    break;
-                }
-            }
-            
-            return rewards;
+      }
+    },
+    {
+      id: 'heavenly_tribulation',
+      title: '天劫突至',
+      desc: '你突破时引动天劫，雷云压顶，九死一生！',
+      type: 'crisis',
+      choices: [
+        { id: 'A', text: '以肉身硬抗天雷', risk: 'extreme', effect: '渡劫成功/灰飞烟灭' },
+        { id: 'B', text: '祭出所有法宝防御', risk: 'high', effect: '法宝尽毁/保住性命' },
+        { id: 'C', text: '寻找避雷阵法遗迹', risk: 'medium', effect: '降低天劫威力' }
+      ],
+      resolve: (choice, player) => {
+        if (choice === 'A') {
+          if (Math.random() < 0.3) {
+            return { success: true, exp: player.exp, msg: '你以凡躯抗天雷，肉身成圣！突破成功！' };
+          } else {
+            return { success: false, hp: -player.maxHp, msg: '天雷灭体，你陨落于劫火之中...' };
+          }
+        } else if (choice === 'B') {
+          return { success: true, artifacts: 'all_destroyed', msg: '法宝尽毁，但保住了性命，突破失败。' };
+        } else {
+          if (Math.random() < 0.6) {
+            return { success: true, exp: randomRange(50, 100), msg: '你找到上古避雷阵，天劫威力大减，勉强突破。' };
+          } else {
+            return { success: false, hp: -player.maxHp * 0.5, msg: '阵法残缺，未能完全抵挡，身受重伤。' };
+          }
         }
+      }
+    }
+  ]
+};
 
-        function generateSkill(luckFactor) {
-            const roll = Math.random() * luckFactor;
-            let tier, pool;
-            
-            if (roll > 0.98) {
-                tier = 'gold';
-                pool = SKILLS.gold;
-            } else if (roll > 0.85) {
-                tier = 'purple';
-                pool = SKILLS.purple;
-            } else if (roll > 0.55) {
-                tier = 'blue';
-                pool = SKILLS.blue;
-            } else {
-                tier = 'white';
-                pool = SKILLS.white;
-            }
-            
-            const skill = pool[Math.floor(Math.random() * pool.length)];
-            return { tier, data: skill };
-        }
+// ==================== 游戏状态 ====================
+let player = {
+  name: '无名修士',
+  realm: 0,
+  exp: 0,
+  hp: 100, maxHp: 100,
+  mp: 50, maxMp: 50,
+  
+  // 五行属性
+  elements: { metal: 0, wood: 0, water: 0, fire: 0, earth: 0 },
+  
+  // 灵根
+  spiritualRoot: 'mixed',
+  
+  // 心境
+  mindState: 'stable',
+  
+  // 气运（隐藏）
+  luck: 10,
+  
+  // 资源
+  gold: 0,
+  herbs: [],
+  artifacts: [],
+  spiritualArts: [],
+  beasts: [],
+  
+  // 记录
+  totalCultivationTime: 0,
+  eventCount: 0,
+  lastSave: Date.now(),
+  nextEventTime: 0,
+  
+  // 长期效果（事件带来的持续影响）
+  longTermEffects: []
+};
 
-        function applyRewards(rewards) {
-            for (const r of rewards) {
-                switch (r.type) {
-                    case 'exp': player.exp = Math.max(0, player.exp + r.value); break;
-                    case 'gold': player.gold = Math.max(0, player.gold + r.value); break;
-                    case 'hp': player.hp = Math.max(1, Math.min(player.maxHp, player.hp + r.value)); break;
-                    case 'mp': player.mp = Math.max(0, Math.min(player.maxMp, player.mp + r.value)); break;
-                    case 'skill':
-                        if (!player.skills.find(s => s.name === r.name)) {
-                            player.skills.push({ ...r.skill, tier: r.tier });
-                            recalcStats();
-                        }
-                        break;
-                }
-            }
-        }
+let currentState = 'closed'; // closed, circulate, breakthrough, disturbed
+let eventInProgress = false;
+let gameTimer = null;
+let eventTimer = null;
+let startTime = Date.now();
 
-        function recalcStats() {
-            const realm = REALMS[player.realm];
-            let baseHp = 100 + realm.hpBonus;
-            let baseMp = 50 + realm.mpBonus;
-            let baseAtk = 10 + realm.atkBonus;
-            let baseDef = 5 + realm.defBonus;
-            let baseAgi = 5 + realm.agiBonus;
-            
-            for (const skill of player.skills) {
-                baseHp += skill.hp || 0;
-                baseMp += skill.mp || 0;
-                baseAtk += skill.atk || 0;
-                baseDef += skill.def || 0;
-                baseAgi += skill.agi || 0;
-            }
-            
-            player.maxHp = baseHp;
-            player.maxMp = baseMp;
-            player.atk = baseAtk;
-            player.def = baseDef;
-            player.agi = baseAgi;
-            
-            player.hp = Math.min(player.hp, player.maxHp);
-            player.mp = Math.min(player.mp, player.maxMp);
-        }
+// ==================== 初始化 ====================
+function initGame() {
+  // 随机分配灵根
+  const rootKeys = Object.keys(SPIRITUAL_ROOTS);
+  player.spiritualRoot = rootKeys[Math.floor(Math.random() * rootKeys.length)];
+  
+  // 随机五行偏向
+  const bias = Math.floor(Math.random() * 5);
+  const elementNames = ['metal', 'wood', 'water', 'fire', 'earth'];
+  player.elements[elementNames[bias]] = randomRange(5, 15);
+  
+  updateUI();
+  updateHiddenStats();
+  scheduleNextEvent();
+  startCultivationLoop();
+}
 
-        function checkRealmBreakthrough() {
-            let currentRealm = player.realm;
-            while (currentRealm < REALMS.length - 1 && player.exp >= REALMS[currentRealm].expNeed) {
-                player.exp -= REALMS[currentRealm].expNeed;
-                currentRealm++;
-                showPetBubble('境界突破', `突破至「${REALMS[currentRealm].name}」！实力大增。`, [], true);
-            }
-            player.realm = currentRealm;
-            recalcStats();
-        }
+function loadGame() {
+  const saved = localStorage.getItem('jianghu_xiuzhen_pet_save');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      const now = Date.now();
+      const offlineTime = Math.floor((now - data.lastSave) / 1000);
+      
+      player = data;
+      
+      if (offlineTime > 10) {
+        processOfflineCultivation(offlineTime);
+      }
+      
+      updateUI();
+      updateHiddenStats();
+      showBubble('离线挂机', `你离线了 ${formatTime(offlineTime)}，修为自动增长。`, null, true);
+    } catch (e) {
+      initGame();
+    }
+  } else {
+    initGame();
+  }
+}
 
-        // ==================== UI 渲染 ====================
-        function updateUI() {
-            const realm = REALMS[player.realm];
-            const expPercent = Math.min(100, Math.floor((player.exp / realm.expNeed) * 100));
-            
-            document.getElementById('petRealm').textContent = realm.name;
-            document.getElementById('petExpText').textContent = `${player.exp} / ${realm.expNeed}`;
-            document.getElementById('petExpBar').style.width = expPercent + '%';
-            document.getElementById('petHpText').textContent = `${player.hp} / ${player.maxHp}`;
-            document.getElementById('petHpBar').style.width = (player.hp / player.maxHp * 100) + '%';
-        }
+function saveGame() {
+  player.lastSave = Date.now();
+  localStorage.setItem('jianghu_xiuzhen_pet_save', JSON.stringify(player));
+}
 
-        function showPetBubble(title, desc, rewards, success) {
-            const bubble = document.getElementById('eventBubble');
-            const statusText = document.getElementById('petStatus');
-            if (!bubble) return;
-            
-            let html = `<div class="bubble-title">${success ? '✓' : '✗'} ${title}</div>`;
-            html += `<div class="bubble-desc">${desc}</div>`;
-            
-            if (rewards && rewards.length > 0) {
-                html += '<div class="bubble-reward">';
-                for (const r of rewards) {
-                    if (r.type === 'skill') {
-                        const tierColor = { white: '#666', blue: '#2c4a6e', purple: '#6b3a7d', gold: '#b8860b' };
-                        html += `<span style="color:${tierColor[r.tier]}">${r.name}</span> `;
-                    } else {
-                        const color = r.value > 0 ? 'var(--jade)' : 'var(--red)';
-                        html += `<span style="color:${color}">${r.text}${Math.abs(r.value)}</span> `;
-                    }
-                }
-                html += '</div>';
-            }
-            
-            bubble.innerHTML = html;
-            bubble.classList.add('show');
-            
-            const statusLines = [
-                '正在打坐修炼...',
-                '气息流转，周天运转...',
-                '心如止水，渐入佳境...',
-                '真气充盈，经脉通畅...',
-                '感悟天地之道...',
-                '神游太虚，物我两忘...'
-            ];
-            statusText.textContent = statusLines[Math.floor(Math.random() * statusLines.length)];
-            
-            setTimeout(() => {
-                bubble.classList.remove('show');
-            }, 5000);
-        }
+// ==================== 离线修炼 ====================
+function processOfflineCultivation(offlineSeconds) {
+  const rootGrowth = SPIRITUAL_ROOTS[player.spiritualRoot].growth;
+  const baseExp = 2 * rootGrowth;
+  const totalExp = Math.floor(baseExp * offlineSeconds / 10);
+  
+  player.exp += totalExp;
+  player.totalCultivationTime += offlineSeconds;
+  
+  // 离线也可能触发事件（简化版）
+  let eventCount = Math.floor(offlineSeconds / 300); // 每5分钟一个事件
+  for (let i = 0; i < Math.min(eventCount, 5); i++) {
+    const eventType = pickRandom(['daily', 'qi', 'crisis']);
+    const eventPool = XIUZHEN_EVENTS[eventType];
+    const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+    const success = Math.random() < 0.5;
+    
+    if (success) {
+      player.exp += randomRange(10, 30);
+    }
+    player.eventCount++;
+  }
+  
+  checkBreakthrough();
+}
 
-        // ==================== 工具函数 ====================
-        function randomRange(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
+// ==================== 修炼循环 ====================
+function startCultivationLoop() {
+  gameTimer = setInterval(() => {
+    // 自动修炼增长修为
+    const rootGrowth = SPIRITUAL_ROOTS[player.spiritualRoot].growth;
+    const baseExp = 0.5 * rootGrowth;
+    
+    // 心境影响修炼效率
+    const mindEffect = MIND_STATES[player.mindState].eventBonus;
+    const expGain = baseExp * (1 + mindEffect);
+    
+    player.exp += expGain;
+    player.totalCultivationTime += 1;
+    
+    // 自动恢复
+    player.hp = Math.min(player.maxHp, player.hp + 0.1);
+    player.mp = Math.min(player.maxMp, player.mp + 0.05);
+    
+    updateUI();
+    saveGame();
+  }, 1000);
+}
 
-        function pickRandom(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
+// ==================== 事件系统 ====================
+function scheduleNextEvent() {
+  // 低频事件：30-90秒
+  const delay = randomRange(30000, 90000);
+  player.nextEventTime = Date.now() + delay;
+  
+  if (eventTimer) clearTimeout(eventTimer);
+  eventTimer = setTimeout(() => {
+    if (!eventInProgress) {
+      triggerEvent();
+    }
+  }, delay);
+}
 
-        function formatTime(seconds) {
-            if (seconds < 60) return `${seconds}秒`;
-            if (seconds < 3600) return `${Math.floor(seconds / 60)}分${seconds % 60}秒`;
-            if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分`;
-            return `${Math.floor(seconds / 86400)}天${Math.floor((seconds % 86400) / 3600)}小时`;
-        }
+function triggerEvent() {
+  if (eventInProgress) return;
+  eventInProgress = true;
+  
+  // 根据气运和心境计算事件类型权重
+  const luck = player.luck;
+  const mindState = player.mindState;
+  
+  let weights = { daily: 60, qi: 30, crisis: 10 };
+  
+  // 气运高增加奇遇概率
+  if (luck > 50) weights.qi += 20;
+  if (luck > 100) weights.crisis += 10;
+  
+  // 心境影响
+  if (mindState === 'demon') weights.crisis += 20;
+  if (mindState === 'enlightenment') weights.qi += 15;
+  
+  const eventType = weightedRandom(weights);
+  const eventPool = XIUZHEN_EVENTS[eventType];
+  const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+  
+  // 切换到受扰状态
+  setState('disturbed');
+  
+  // 显示事件气泡
+  showEventBubble(event);
+}
 
-        function openFullVersion() {
-            // 在浏览器中打开完整版
-            window.open('https://terryissb.github.io/jianghu-idle/', '_blank');
-        }
+function showEventBubble(event) {
+  const bubble = document.getElementById('eventBubble');
+  const title = document.getElementById('bubbleTitle');
+  const type = document.getElementById('bubbleType');
+  const desc = document.getElementById('bubbleDesc');
+  const choices = document.getElementById('choices');
+  const result = document.getElementById('choiceResult');
+  
+  title.textContent = event.title;
+  type.textContent = event.type === 'daily' ? '日常修炼' : event.type === 'qi' ? '奇遇' : '危机';
+  type.className = 'bubble-type type-' + event.type;
+  desc.textContent = event.desc;
+  result.innerHTML = '';
+  
+  choices.innerHTML = '';
+  event.choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${choice.id}</span>${choice.text}`;
+    btn.onclick = () => resolveChoice(event, choice.id);
+    choices.appendChild(btn);
+  });
+  
+  bubble.classList.add('show');
+  player.eventCount++;
+}
 
-        // ==================== 定时器 ====================
-        function startGameLoop() {
-            gameTimer = setInterval(() => {
-                updateUI();
-            }, 500);
-            
-            setInterval(() => {
-                player.totalPlayTime += Math.floor((Date.now() - startTime) / 1000);
-                startTime = Date.now();
-                saveGame();
-            }, 10000);
-            
-            scheduleNextEvent();
-        }
+function resolveChoice(event, choiceId) {
+  const result = event.resolve(choiceId, player);
+  
+  // 禁用所有按钮
+  const buttons = document.querySelectorAll('.choice-btn');
+  buttons.forEach(btn => btn.disabled = true);
+  
+  // 显示结果
+  const resultDiv = document.getElementById('choiceResult');
+  resultDiv.innerHTML = `<strong>${result.success ? '✓' : '✗'}</strong> ${result.msg}`;
+  
+  // 应用结果
+  if (result.exp) player.exp += result.exp;
+  if (result.hp) player.hp = Math.max(1, Math.min(player.maxHp, player.hp + result.hp));
+  if (result.gold) player.gold = Math.max(0, player.gold + result.gold);
+  if (result.luck) player.luck += result.luck;
+  if (result.mindShift) {
+    player.mindState = result.mindShift;
+    setState(result.mindShift === 'enlightenment' ? 'circulate' : result.mindShift === 'demon' ? 'disturbed' : 'closed');
+  }
+  if (result.skill) player.spiritualArts.push(result.skill);
+  if (result.herb) player.herbs.push(result.herb);
+  if (result.artifact) player.artifacts.push(result.artifact);
+  
+  // 长期效果
+  if (result.longTerm) {
+    player.longTermEffects.push(result.longTerm);
+  }
+  
+  // 检查突破
+  checkBreakthrough();
+  
+  updateUI();
+  updateHiddenStats();
+  saveGame();
+  
+  // 5秒后关闭气泡
+  setTimeout(() => {
+    document.getElementById('eventBubble').classList.remove('show');
+    eventInProgress = false;
+    setState('closed');
+    scheduleNextEvent();
+  }, 5000);
+}
 
-        // 页面关闭前保存
-        window.addEventListener('beforeunload', () => {
-            player.totalPlayTime += Math.floor((Date.now() - startTime) / 1000);
-            saveGame();
-        });
+// ==================== 突破系统 ====================
+function checkBreakthrough() {
+  const currentRealm = REALMS[player.realm];
+  if (player.exp >= currentRealm.expNeed) {
+    // 进入突破状态
+    setState('breakthrough');
+    
+    // 计算突破成功率
+    const rootGrowth = SPIRITUAL_ROOTS[player.spiritualRoot].growth;
+    const mindBonus = MIND_STATES[player.mindState].eventBonus;
+    const luckBonus = player.luck * 0.001;
+    const baseRate = 0.5 + (rootGrowth - 1) * 0.2 + mindBonus + luckBonus;
+    
+    if (Math.random() < baseRate) {
+      // 突破成功
+      player.exp -= currentRealm.expNeed;
+      player.realm++;
+      
+      const newRealm = REALMS[player.realm];
+      
+      // 属性暴涨
+      player.maxHp += 50 * (player.realm + 1);
+      player.maxMp += 30 * (player.realm + 1);
+      player.hp = player.maxHp;
+      player.mp = player.maxMp;
+      
+      // 显示突破特效
+      showBreakthroughEffect(newRealm.name);
+      
+      showBubble('境界突破', `你突破至「${newRealm.name}」！${newRealm.desc}`, null, true);
+    } else {
+      // 突破失败
+      player.exp = Math.floor(player.exp * 0.5); // 损失一半修为
+      player.hp = Math.floor(player.maxHp * 0.3);
+      
+      showBubble('突破失败', '你冲击瓶颈失败，修为受损，需重新积累。', null, false);
+      setState('disturbed');
+    }
+    
+    saveGame();
+  }
+}
 
-        // 右键菜单
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            // 这里可以触发 Electron 的右键菜单
-            if (window.electronAPI) {
-                window.electronAPI.showContextMenu();
-            }
-        });
+function showBreakthroughEffect(realmName) {
+  const overlay = document.getElementById('breakthroughOverlay');
+  const text = document.getElementById('breakthroughText');
+  text.textContent = `突破成功！${realmName}`;
+  overlay.classList.add('active');
+  
+  setTimeout(() => {
+    overlay.classList.remove('active');
+  }, 2000);
+}
 
-        // ==================== 启动 ====================
-        loadGame();
-        startGameLoop();
-    </script>
+// ==================== 通用气泡（非事件） ====================
+function showBubble(title, desc, rewards, success) {
+  const bubble = document.getElementById('eventBubble');
+  document.getElementById('bubbleTitle').textContent = title;
+  document.getElementById('bubbleType').textContent = '修炼';
+  document.getElementById('bubbleType').className = 'bubble-type type-daily';
+  document.getElementById('bubbleDesc').textContent = desc;
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('choiceResult').innerHTML = '';
+  
+  bubble.classList.add('show');
+  
+  setTimeout(() => {
+    bubble.classList.remove('show');
+  }, 4000);
+}
+
+// ==================== 状态切换 ====================
+function setState(state) {
+  currentState = state;
+  const wrapper = document.getElementById('cultivatorWrapper');
+  const label = document.getElementById('stateLabel');
+  
+  wrapper.className = 'cultivator-wrapper state-' + state;
+  
+  const labels = {
+    closed: '闭目修炼',
+    circulate: '周天运转',
+    breakthrough: '冲击瓶颈',
+    disturbed: '心魔侵扰'
+  };
+  label.textContent = labels[state] || '修炼中';
+}
+
+// ==================== UI 更新 ====================
+function updateUI() {
+  // 极简UI，主要通过小人状态和气泡展示
+  // 隐藏属性在鼠标悬停时显示
+}
+
+function updateHiddenStats() {
+  const stats = document.getElementById('hiddenStats');
+  const realm = REALMS[player.realm];
+  const root = SPIRITUAL_ROOTS[player.spiritualRoot];
+  const mind = MIND_STATES[player.mindState];
+  const expPercent = Math.min(100, Math.floor((player.exp / realm.expNeed) * 100));
+  
+  stats.innerHTML = `
+    <div class="stat-line">${realm.name} | ${player.exp}/${realm.expNeed} (${expPercent}%)</div>
+    <div class="stat-line">灵根: ${root.name} | 心境: <span style="color:${mind.color}">${mind.name}</span></div>
+    <div class="stat-line">气运: ${player.luck} | 事件: ${player.eventCount}</div>
+  `;
+}
+
+// ==================== 生成器 ====================
+function generateSpiritualArt() {
+  const arts = [
+    { name: '太虚剑诀', tier: 'purple', desc: '剑气纵横三万里' },
+    { name: '九转金丹诀', tier: 'gold', desc: '丹成九转，造化无穷' },
+    { name: '遁甲天书', tier: 'blue', desc: '奇门遁甲，趋吉避凶' },
+    { name: '乙木长生功', tier: 'green', desc: '生生不息，寿元绵长' }
+  ];
+  return arts[Math.floor(Math.random() * arts.length)];
+}
+
+function generateArtifact() {
+  const artifacts = [
+    { name: '乾坤鼎', tier: 'gold', desc: '炼化万物' },
+    { name: '照妖镜', tier: 'purple', desc: '识破虚妄' },
+    { name: '捆仙绳', tier: 'blue', desc: '缚妖锁魔' }
+  ];
+  return artifacts[Math.floor(Math.random() * artifacts.length)];
+}
+
+function generateHerb() {
+  const herbs = [
+    { name: '千年灵芝', effect: 'hp', value: 50 },
+    { name: '九叶剑草', effect: 'exp', value: 30 },
+    { name: '龙血参', effect: 'both', value: 20 }
+  ];
+  return herbs[Math.floor(Math.random() * herbs.length)];
+}
+
+// ==================== 工具函数 ====================
+function randomRange(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function weightedRandom(weights) {
+  const total = Object.values(weights).reduce((a, b) => a + b, 0);
+  let roll = Math.random() * total;
+  
+  for (const [key, weight] of Object.entries(weights)) {
+    roll -= weight;
+    if (roll <= 0) return key;
+  }
+  return Object.keys(weights)[0];
+}
+
+function formatTime(seconds) {
+  if (seconds < 60) return `${seconds}秒`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}分${seconds % 60}秒`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分`;
+  return `${Math.floor(seconds / 86400)}天${Math.floor((seconds % 86400) / 3600)}小时`;
+}
+
+// ==================== 页面事件 ====================
+window.addEventListener('beforeunload', () => {
+  player.totalCultivationTime += Math.floor((Date.now() - startTime) / 1000);
+  saveGame();
+});
+
+// 右键打开完整版
+// document.addEventListener('contextmenu', (e) => {
+//   e.preventDefault();
+//   if (window.electronAPI) {
+//     window.electronAPI.showContextMenu();
+//   }
+// });
+
+// ==================== 启动 ====================
+loadGame();
+</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 {
   "name": "jianghu-idle",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "江湖挂机录 - 桌面宠物版",
   "main": "main.js",
   "scripts": {
