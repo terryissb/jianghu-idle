@@ -1,4 +1,4 @@
-import { State, addHistory } from './State.js';
+import { State, addHistory, REALMS } from './State.js';
 
 export function recordEvent(title, choice, result, changes) {
   const realmBefore = State.realm;
@@ -41,7 +41,6 @@ export function recordMeditation(duration) {
 }
 
 function getRealmNameAt(idx) {
-  const { REALMS } = require('./State.js');
   if (idx < 0) return '未知';
   return REALMS[idx]?.name || '未知';
 }

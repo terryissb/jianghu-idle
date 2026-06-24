@@ -1,4 +1,5 @@
 import { State } from './State.js';
+import { calculateTechniqueEffects } from './TechniqueSystem.js';
 
 export const EVENTS = [
   {
@@ -126,7 +127,6 @@ export class EventEngine {
 
   getEventChance() {
     let base = State.meditationMode ? 0.985 : 0.97;
-    const { calculateTechniqueEffects } = require('./TechniqueSystem.js');
     const effects = calculateTechniqueEffects(State.techniques.active);
     if (effects.eventReduction > 0) {
       base += effects.eventReduction * 0.05;
