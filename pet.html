@@ -19,11 +19,12 @@
     --blue: #2c4a6e;
     --purple: #6b3a7d;
     --white: rgba(255,255,255,0.9);
+    --border: rgba(184, 134, 11, 0.3);
   }
 
   body {
     font-family: 'Noto Serif SC', 'SimSun', serif;
-    background: rgba(26, 21, 16, 0.95);
+    background: transparent;
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -34,22 +35,17 @@
     overflow: hidden;
   }
 
-  /* 极简打坐小人 - 仅在 aura 区域拖动，其余区域可点击 */
-  .cultivator-wrapper {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    cursor: default;
-  }
-
+  /* 拖动区域 - 只覆盖小人身体，不覆盖气泡和按钮 */
   .drag-zone {
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
     -webkit-app-region: drag;
     z-index: 1;
   }
-
-  .cultivator-wrapper:active { cursor: grabbing; }
 
   /* 四种状态 */
   .cultivator-wrapper.state-closed .cultivator { animation: breathe-closed 3s ease-in-out infinite; }
@@ -823,6 +819,8 @@ function loadGame() {
       
       updateUI();
       updateHiddenStats();
+      scheduleNextEvent();       // ← 启动事件循环
+      startCultivationLoop();    // ← 启动修炼循环
       showBubble('离线挂机', `你离线了 ${formatTime(offlineTime)}，修为自动增长。`, null, true);
       console.log('[renderer] loadGame success');
     } catch (e) {
