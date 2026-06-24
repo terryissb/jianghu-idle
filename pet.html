@@ -18,6 +18,7 @@
     padding-bottom: 20px;
     -webkit-user-select: none;
     overflow: hidden;
+    position: relative;
   }
 
   /* ==================== Layer A: Character ==================== */
@@ -25,6 +26,7 @@
     position: relative;
     width: 120px;
     height: 120px;
+    z-index: 1;
   }
 
   .drag-zone {
@@ -156,14 +158,15 @@
 
   /* ==================== Layer B: UI ==================== */
   .ui-layer {
-    position: relative;
-    z-index: 10;
-    pointer-events: auto;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    pointer-events: none;
   }
 
   .hidden-stats {
     position: absolute;
-    bottom: -95px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(10px);
     background: rgba(0,0,0,0.85);
@@ -177,11 +180,6 @@
     pointer-events: none;
     transition: all 0.3s ease;
   }
-  .character-layer:hover .hidden-stats {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  .stat-line { margin-bottom: 4px; }
 
   .event-bubble {
     position: absolute;
@@ -199,15 +197,16 @@
     opacity: 0;
     pointer-events: none;
     transition: all 0.4s ease;
-    z-index: 100;
-    max-height: 0;
-    overflow: hidden;
+    z-index: 100000;
+    display: none;
+    visibility: hidden;
   }
   .event-bubble.show {
+    display: block;
+    visibility: visible;
     opacity: 1;
     pointer-events: auto;
     transform: translateX(-50%) translateY(0);
-    max-height: 400px;
   }
   .event-bubble::after {
     content: '';
@@ -292,11 +291,11 @@
   </div>
   <div class="aura"></div>
   <div class="state-label" id="stateLabel">闭目修炼</div>
-  <div class="hidden-stats" id="hiddenStats"></div>
 </div>
 
 <!-- ==================== Layer B: UI ==================== -->
 <div class="ui-layer" id="uiLayer">
+  <div class="hidden-stats" id="hiddenStats"></div>
   <div class="event-bubble" id="eventBubble">
     <div class="bubble-title" id="bubbleTitle"></div>
     <div style="text-align:center"><span class="bubble-type" id="bubbleType"></span></div>
@@ -307,8 +306,24 @@
 </div>
 
 <script>
-// ==================== Layer C: Game Engine ====================
+// ==================== EventBus ====================
+class EventBus {
+  constructor() {
+    this.events = {};
+  }
+  on(event, callback) {
+    if (!this.events[event]) this.events[event] = [];
+    this.events[event].push(callback);
+  }
+  emit(event, data) {
+    console.log(`[EventBus] emit: ${event}`);
+    if (!this.events[event]) return;
+    this.events[event].forEach(cb => cb(data));
+  }
+}
+const bus = new EventBus();
 
+// ==================== Data ====================
 const REALMS = [
   { name: '炼气期', expNeed: 100 },
   { name: '筑基期', expNeed: 500 },
@@ -337,78 +352,48 @@ const MINDS = {
 
 const EVENTS = [
   {
-    title: '灵气逆流',
-    desc: '修炼时灵气突然逆流，经脉隐隐作痛。',
-    type: 'daily',
-    choices: [
-      { id: 'A', text: '强行镇压' },
-      { id: 'B', text: '顺势引导' },
-      { id: 'C', text: '暂停修炼' }
-    ],
+    title: '灵气逆流', desc: '修炼时灵气突然逆流，经脉隐隐作痛。', type: 'daily',
+    choices: [{id:'A',text:'强行镇压'},{id:'B',text:'顺势引导'},{id:'C',text:'暂停修炼'}],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.6 ? {s:true,exp:40,msg:'镇压成功，修为大涨！'} : {s:false,exp:-10,msg:'镇压失败，经脉受损。'};
-      if (c === 'B') return {s:true,exp:20,msg:'顺水推舟，修为稳步提升。'};
+      if (c==='A') return Math.random()<0.6?{s:true,exp:40,msg:'镇压成功，修为大涨！'}:{s:false,exp:-10,msg:'镇压失败，经脉受损。'};
+      if (c==='B') return {s:true,exp:20,msg:'顺水推舟，修为稳步提升。'};
       return {s:true,exp:5,msg:'暂避锋芒，待灵气平息。'};
     }
   },
   {
-    title: '心魔侵扰',
-    desc: '闭关时，往日遗憾化作幻象，缠绕心神。',
-    type: 'daily',
-    choices: [
-      { id: 'A', text: '直面心魔' },
-      { id: 'B', text: '诵念清心咒' },
-      { id: 'C', text: '引入幻境' }
-    ],
+    title: '心魔侵扰', desc: '闭关时，往日遗憾化作幻象，缠绕心神。', type: 'daily',
+    choices: [{id:'A',text:'直面心魔'},{id:'B',text:'诵念清心咒'},{id:'C',text:'引入幻境'}],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.5 ? {s:true,exp:50,msg:'破茧而出，心魔尽消！'} : {s:false,exp:-20,msg:'心魔反噬。'};
-      if (c === 'B') return {s:true,exp:10,msg:'清心咒洗涤心神。'};
-      return Math.random()<0.3 ? {s:true,exp:100,msg:'置之死地而后生！'} : {s:false,exp:-50,msg:'引魔入体。'};
+      if (c==='A') return Math.random()<0.5?{s:true,exp:50,msg:'破茧而出，心魔尽消！'}:{s:false,exp:-20,msg:'心魔反噬。'};
+      if (c==='B') return {s:true,exp:10,msg:'清心咒洗涤心神。'};
+      return Math.random()<0.3?{s:true,exp:100,msg:'置之死地而后生！'}:{s:false,exp:-50,msg:'引魔入体。'};
     }
   },
   {
-    title: '顿悟机缘',
-    desc: '观云卷云舒，忽有所感，大道之光照入灵台。',
-    type: 'daily',
-    choices: [
-      { id: 'A', text: '全力感悟' },
-      { id: 'B', text: '徐徐图之' },
-      { id: 'C', text: '记录感悟' }
-    ],
+    title: '顿悟机缘', desc: '观云卷云舒，忽有所感，大道之光照入灵台。', type: 'daily',
+    choices: [{id:'A',text:'全力感悟'},{id:'B',text:'徐徐图之'},{id:'C',text:'记录感悟'}],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.5 ? {s:true,exp:80,msg:'灵光一闪，瓶颈松动！'} : {s:false,exp:20,msg:'时机未到。'};
-      if (c === 'B') return {s:true,exp:20,msg:'稳扎稳打，根基扎实。'};
+      if (c==='A') return Math.random()<0.5?{s:true,exp:80,msg:'灵光一闪，瓶颈松动！'}:{s:false,exp:20,msg:'时机未到。'};
+      if (c==='B') return {s:true,exp:20,msg:'稳扎稳打，根基扎实。'};
       return {s:true,luck:5,msg:'感悟刻入玉简，气运提升。'};
     }
   },
   {
-    title: '仙人指路',
-    desc: '雾中走来一位白发老者，自称是云游散仙。',
-    type: 'qi',
-    choices: [
-      { id: 'A', text: '跪求指点' },
-      { id: 'B', text: '谨慎试探' },
-      { id: 'C', text: '婉言谢绝' }
-    ],
+    title: '仙人指路', desc: '雾中走来一位白发老者，自称是云游散仙。', type: 'qi',
+    choices: [{id:'A',text:'跪求指点'},{id:'B',text:'谨慎试探'},{id:'C',text:'婉言谢绝'}],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.7 ? {s:true,exp:60,msg:'仙人授你心法！'} : {s:false,msg:'老者收了灵石消失。'};
-      if (c === 'B') return Math.random()<0.6 ? {s:true,exp:40,msg:'传了半部心法。'} : {s:false,msg:'老者摇头离去。'};
+      if (c==='A') return Math.random()<0.7?{s:true,exp:60,msg:'仙人授你心法！'}:{s:false,msg:'老者收了灵石消失。'};
+      if (c==='B') return Math.random()<0.6?{s:true,exp:40,msg:'传了半部心法。'}:{s:false,msg:'老者摇头离去。'};
       return {s:true,msg:'虽无所得，亦无失。'};
     }
   },
   {
-    title: '魔修来袭',
-    desc: '一位魔修发现你的洞府，欲夺你灵根炼药！',
-    type: 'crisis',
-    choices: [
-      { id: 'A', text: '拼死一战' },
-      { id: 'B', text: '弃洞逃遁' },
-      { id: 'C', text: '以灵石贿赂' }
-    ],
+    title: '魔修来袭', desc: '一位魔修发现你的洞府，欲夺你灵根炼药！', type: 'crisis',
+    choices: [{id:'A',text:'拼死一战'},{id:'B',text:'弃洞逃遁'},{id:'C',text:'以灵石贿赂'}],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.4 ? {s:true,exp:100,msg:'反杀魔修，获其储物袋！'} : {s:false,exp:-30,msg:'重伤逃遁。'};
-      if (c === 'B') return {s:true,msg:'保全性命。'};
-      return Math.random()<0.5 ? {s:true,msg:'破财消灾。'} : {s:false,exp:-20,msg:'魔修贪得无厌。'};
+      if (c==='A') return Math.random()<0.4?{s:true,exp:100,msg:'反杀魔修，获其储物袋！'}:{s:false,exp:-30,msg:'重伤逃遁。'};
+      if (c==='B') return {s:true,msg:'保全性命。'};
+      return Math.random()<0.5?{s:true,msg:'破财消灾。'}:{s:false,exp:-20,msg:'魔修贪得无厌。'};
     }
   }
 ];
@@ -428,28 +413,125 @@ let player = {
 let eventInProgress = false;
 let eventTimer = null;
 let gameTimer = null;
+let tickCount = 0;
 
-// ==================== 1. initCharacter() ====================
-function initCharacter() {
-  console.log('[Character] loaded');
-  const roots = Object.keys(ROOTS);
-  player.spiritualRoot = roots[Math.floor(Math.random() * roots.length)];
-  console.log('[Character] root:', player.spiritualRoot);
+// ==================== 1. mountCharacter ====================
+function mountCharacter() {
+  console.log('[CHAR] mounted');
+  const character = document.getElementById('characterLayer');
+  if (!character) console.error('[CHAR] characterLayer not found');
 }
 
-// ==================== 2. mountUI() ====================
+// ==================== 2. mountUI ====================
 function mountUI() {
-  console.log('[UI] mounting...');
-  const bubble = document.getElementById('eventBubble');
-  const stats = document.getElementById('hiddenStats');
-  if (!bubble) console.error('[UI] eventBubble NOT FOUND');
-  if (!stats) console.error('[UI] hiddenStats NOT FOUND');
   console.log('[UI] mounted');
+  const bubble = document.getElementById('eventBubble');
+  if (bubble) {
+    bubble.style.display = 'none';
+    bubble.style.visibility = 'hidden';
+    bubble.style.opacity = '0';
+  }
+  bus.on('event:show', showEventUI);
+  bus.on('state:update', updateStats);
 }
 
-// ==================== 3. initEventEngine() ====================
-function initEventEngine() {
-  console.log('[Engine] started');
+function showEventUI(event) {
+  console.log('[UI] showEventUI:', event.title);
+  const el = document.getElementById('eventBubble');
+  if (!el) { console.error('[UI] eventBubble not found'); return; }
+
+  el.style.display = 'block';
+  el.style.visibility = 'visible';
+  el.style.opacity = '1';
+  el.classList.add('show');
+
+  const title = document.getElementById('bubbleTitle');
+  const type = document.getElementById('bubbleType');
+  const desc = document.getElementById('bubbleDesc');
+  const choices = document.getElementById('choices');
+  const result = document.getElementById('choiceResult');
+
+  title.textContent = event.title;
+  type.textContent = event.type==='daily'?'日常':event.type==='qi'?'奇遇':'危机';
+  type.className = 'bubble-type type-'+event.type;
+  desc.textContent = event.desc;
+  result.innerHTML = '';
+  choices.innerHTML = '';
+
+  event.choices.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${ch.id}</span>${ch.text}`;
+    btn.onclick = function() {
+      console.log('[Click] received:', ch.id);
+      bus.emit('choice:made', { event, choiceId: ch.id });
+    };
+    choices.appendChild(btn);
+  });
+
+  setState('受扰');
+  player.eventCount++;
+}
+
+// ==================== 3. initEventSystem ====================
+function initEventSystem() {
+  console.log('[Engine] event system active');
+  bus.on('choice:made', handleChoice);
+  bus.on('event:closed', () => {
+    eventInProgress = false;
+    setState('闭目修炼');
+    scheduleEvent();
+  });
+}
+
+function handleChoice(data) {
+  const { event, choiceId } = data;
+  console.log('[Engine] resolving choice:', choiceId);
+  const res = event.resolve(choiceId);
+
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  document.getElementById('choiceResult').innerHTML = `<strong>${res.s?'✓':'✗'}</strong> ${res.msg}`;
+
+  if (res.exp) player.exp += res.exp;
+  if (res.luck) player.luck += res.luck;
+
+  checkBreakthrough();
+  bus.emit('state:update');
+  save();
+  console.log('[Engine] resolved:', res.msg);
+
+  setTimeout(() => {
+    const bubble = document.getElementById('eventBubble');
+    bubble.classList.remove('show');
+    bubble.style.display = 'none';
+    bubble.style.visibility = 'hidden';
+    bubble.style.opacity = '0';
+    bus.emit('event:closed');
+  }, 4000);
+}
+
+// ==================== 4. initInteractionLayer ====================
+function initInteractionLayer() {
+  console.log('[Interaction] ready');
+  const character = document.getElementById('characterLayer');
+  const stats = document.getElementById('hiddenStats');
+  if (!character || !stats) {
+    console.error('[Interaction] elements not found');
+    return;
+  }
+  character.addEventListener('mouseenter', () => {
+    stats.style.opacity = '1';
+    stats.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  character.addEventListener('mouseleave', () => {
+    stats.style.opacity = '0';
+    stats.style.transform = 'translateX(-50%) translateY(10px)';
+  });
+}
+
+// ==================== 5. startGameLoop ====================
+function startGameLoop() {
+  console.log('[Loop] started');
   const saved = localStorage.getItem('xiuzhen_save');
   if (saved) {
     try {
@@ -462,103 +544,57 @@ function initEventEngine() {
         showSystemBubble('离线挂机', `离线 ${formatTime(offline)}，修为 +${gain}`);
       }
       console.log('[Engine] save loaded');
-    } catch (e) {
-      console.error('[Engine] load failed', e);
-    }
+    } catch (e) { console.error('[Engine] load failed', e); }
+  } else {
+    const roots = Object.keys(ROOTS);
+    player.spiritualRoot = roots[Math.floor(Math.random() * roots.length)];
+    console.log('[Engine] new player, root:', player.spiritualRoot);
   }
+
   updateStats();
   scheduleEvent();
-}
 
-// ==================== 4. startGameLoop() ====================
-function startGameLoop() {
-  console.log('[Loop] started');
   gameTimer = setInterval(() => {
-    const growth = ROOTS[player.spiritualRoot].growth;
-    const bonus = player.mindState === 'enlightenment' ? 1.2 : player.mindState === 'demon' ? 0.7 : 1;
-    player.exp += 0.5 * growth * bonus;
-    player.hp = Math.min(player.maxHp, player.hp + 0.1);
-    player.totalTime++;
-    checkBreakthrough();
-    save();
+    tickCount++;
+    tick();
+    if (tickCount >= rand(10, 30)) {
+      tickCount = 0;
+      maybeTriggerEvent();
+    }
   }, 1000);
 }
 
-// ==================== Engine tick ====================
+function tick() {
+  const growth = ROOTS[player.spiritualRoot].growth;
+  const bonus = player.mindState === 'enlightenment' ? 1.2 : player.mindState === 'demon' ? 0.7 : 1;
+  player.exp += 0.5 * growth * bonus;
+  player.hp = Math.min(player.maxHp, player.hp + 0.1);
+  player.totalTime++;
+  checkBreakthrough();
+  save();
+}
+
 function scheduleEvent() {
-  const delay = rand(10000, 30000); // 10-30秒测试
-  console.log('[Event] next in', (delay / 1000).toFixed(0), 's');
+  const delay = rand(10000, 30000);
+  console.log('[Event] next in', (delay/1000).toFixed(0), 's');
   if (eventTimer) clearTimeout(eventTimer);
   eventTimer = setTimeout(() => {
-    if (!eventInProgress) triggerEvent();
+    if (!eventInProgress) {
+      eventInProgress = true;
+      const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+      bus.emit('event:show', event);
+    }
   }, delay);
 }
 
-function triggerEvent() {
-  console.log('[Event] triggered');
-  eventInProgress = true;
-  const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-  renderEvent(event);
-}
-
-// ==================== UI Rendering ====================
-function renderEvent(event) {
-  console.log('[UI] renderEvent:', event.title);
-  const bubble = document.getElementById('eventBubble');
-  const title = document.getElementById('bubbleTitle');
-  const type = document.getElementById('bubbleType');
-  const desc = document.getElementById('bubbleDesc');
-  const choices = document.getElementById('choices');
-  const result = document.getElementById('choiceResult');
-
-  title.textContent = event.title;
-  type.textContent = event.type === 'daily' ? '日常' : event.type === 'qi' ? '奇遇' : '危机';
-  type.className = 'bubble-type type-' + event.type;
-  desc.textContent = event.desc;
-  result.innerHTML = '';
-  choices.innerHTML = '';
-
-  event.choices.forEach(ch => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    btn.innerHTML = `<span class="choice-label">${ch.id}</span>${ch.text}`;
-    btn.onclick = function() {
-      console.log('[Click] received:', ch.id);
-      handleChoice(event, ch.id);
-    };
-    choices.appendChild(btn);
-  });
-
-  bubble.classList.add('show');
-  setState('受扰');
-  player.eventCount++;
-  console.log('[UI] bubble shown');
-}
-
-function handleChoice(event, choiceId) {
-  console.log('[Engine] resolving choice:', choiceId);
-  const res = event.resolve(choiceId);
-  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
-  document.getElementById('choiceResult').innerHTML = `<strong>${res.s ? '✓' : '✗'}</strong> ${res.msg}`;
-
-  if (res.exp) player.exp += res.exp;
-  if (res.luck) player.luck += res.luck;
-
-  checkBreakthrough();
-  updateStats();
-  save();
-  console.log('[Engine] resolved:', res.msg);
-
-  setTimeout(() => {
-    document.getElementById('eventBubble').classList.remove('show');
-    eventInProgress = false;
-    setState('闭目修炼');
-    scheduleEvent();
-  }, 4000);
-}
-
-function setState(text) {
-  document.getElementById('stateLabel').textContent = text;
+function maybeTriggerEvent() {
+  const chance = Math.random();
+  if (chance > 0.92) {
+    console.log('[Event] triggered by tick');
+    eventInProgress = true;
+    const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+    bus.emit('event:show', event);
+  }
 }
 
 function updateStats() {
@@ -573,6 +609,10 @@ function updateStats() {
   `;
 }
 
+function setState(text) {
+  document.getElementById('stateLabel').textContent = text;
+}
+
 function showSystemBubble(title, desc) {
   const bubble = document.getElementById('eventBubble');
   document.getElementById('bubbleTitle').textContent = title;
@@ -581,8 +621,16 @@ function showSystemBubble(title, desc) {
   document.getElementById('bubbleDesc').textContent = desc;
   document.getElementById('choices').innerHTML = '';
   document.getElementById('choiceResult').innerHTML = '';
+  bubble.style.display = 'block';
+  bubble.style.visibility = 'visible';
+  bubble.style.opacity = '1';
   bubble.classList.add('show');
-  setTimeout(() => bubble.classList.remove('show'), 3000);
+  setTimeout(() => {
+    bubble.classList.remove('show');
+    bubble.style.display = 'none';
+    bubble.style.visibility = 'hidden';
+    bubble.style.opacity = '0';
+  }, 3000);
 }
 
 function checkBreakthrough() {
@@ -615,14 +663,15 @@ function formatTime(s) {
   return Math.floor(s / 3600) + '小时';
 }
 
-// ==================== Strict Boot Sequence ====================
+// ==================== Bootstrap ====================
 document.addEventListener('DOMContentLoaded', () => {
   console.log('========================');
   console.log('Jianghu Idle v2.0 Boot');
   console.log('========================');
-  initCharacter();
+  mountCharacter();
   mountUI();
-  initEventEngine();
+  initEventSystem();
+  initInteractionLayer();
   startGameLoop();
   console.log('========================');
   console.log('Boot Complete');
