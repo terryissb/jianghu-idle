@@ -514,8 +514,8 @@
             opacity: 0;
             pointer-events: none;
             transform: scale(0.95);
-            height: 0;
-            overflow: hidden;
+            visibility: hidden;
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
         }
 
         .pet-mode {
@@ -910,6 +910,7 @@
             </div>
             <div id="offlineBox"></div>
         </div>
+    </div>
     </div>
 
     <!-- 桌面宠物模式 -->
