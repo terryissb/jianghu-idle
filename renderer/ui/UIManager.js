@@ -142,30 +142,49 @@ export class UIManager {
   }
 
   renderHistory() {
-    const list = this.historyPanel.querySelector('.panel-content');
-    if (!list) return;
-    const events = getAllHistory();
-    if (events.length === 0) {
-      list.innerHTML = '<div class="panel-empty">修仙之路刚刚开始，尚无记录。</div>';
-      return;
+    // ① 事件时间线
+    const tl = document.getElementById('historyContent');
+    if (tl) {
+      const events = getAllHistory();
+      if (events.length === 0) {
+        tl.innerHTML = '<div class="tl-empty">修仙之路刚刚开始，尚无记录。</div>';
+      } else {
+        tl.innerHTML = events.map(e => {
+          const timeStr = formatTimestamp(e.time);
+          return `<div class="tl-item">${e.title}（${e.result}）</div>`;
+        }).join('');
+      }
     }
-    list.innerHTML = events.map(e => {
-      const icon = { event: '⚡', breakthrough: '🔥', technique: '📖', meditation: '🌿' };
-      const time = formatTimestamp(e.time);
-      return `
-        <div class="history-item history-${e.type}">
-          <div class="history-icon">${icon[e.type] || '•'}</div>
-          <div class="history-body">
-            <div class="history-header">
-              <span class="history-title">${e.title}</span>
-              <span class="history-time">${time}</span>
-            </div>
-            <div class="history-result">${e.result}</div>
-            ${e.realmBefore ? `<div class="history-realm">${e.realmBefore} → ${e.realmAfter}</div>` : ''}
-          </div>
-        </div>
+
+    // ② 人物当前状态
+    const st = document.getElementById('statusContent');
+    if (st) {
+      const realm = REALMS[State.realm];
+      const mindMap = { stable: 35, turbulent: 20, enlightenment: 50, demon: 5 };
+      const mindVal = mindMap[State.mindState] || 30;
+      const bodyVal = Math.floor(State.hp);
+      const spiritVal = Math.floor(State.mp);
+      const insightVal = Math.floor(State.luck * 2.5);
+      st.innerHTML = `
+        <div><span class="st-label">境界</span>${realm.name}</div>
+        <div><span class="st-label">修为</span>${Math.floor(State.exp)}</div>
+        <div><span class="st-label">心境</span>${mindVal}</div>
+        <div><span class="st-label">灵力</span>${spiritVal}</div>
+        <div><span class="st-label">肉身</span>${bodyVal}</div>
+        <div><span class="st-label">悟性</span>${insightVal}</div>
       `;
-    }).join('');
+    }
+
+    // ③ 功法列表
+    const tc = document.getElementById('techniqueContent');
+    if (tc) {
+      const learned = getLearnedTechniques();
+      if (learned.length === 0) {
+        tc.innerHTML = '<div class="tc-empty">尚未习得功法</div>';
+      } else {
+        tc.innerHTML = learned.map(t => `<div class="tc-item">${t.name}（Lv.${t.level}）</div>`).join('');
+      }
+    }
   }
 
   // ==================== Technique Panel ====================
