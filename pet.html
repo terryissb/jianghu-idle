@@ -252,14 +252,14 @@
   /* 事件气泡 */
   .event-bubble {
     position: absolute;
-    bottom: 130px;
+    bottom: 125px;
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(-50%) translateY(10px);
     background: rgba(245, 240, 232, 0.97);
     border: 2px solid var(--gold);
     border-radius: 14px;
     padding: 14px 16px;
-    width: 260px;
+    width: 240px;
     font-size: 13px;
     line-height: 1.6;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 15px rgba(184, 134, 11, 0.2);
@@ -416,22 +416,24 @@
     100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
   }
 
-  /* 隐藏属性提示（鼠标悬停时显示） */
+  /* 隐藏属性提示（鼠标悬停时显示在小人下方） */
   .hidden-stats {
     position: absolute;
-    top: -60px;
+    bottom: -80px;
     left: 50%;
-    transform: translateX(-50%) translateY(-10px);
-    background: rgba(0,0,0,0.8);
-    border: 1px solid rgba(184, 134, 11, 0.3);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 10px;
-    color: rgba(255,255,255,0.6);
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(0,0,0,0.85);
+    border: 1px solid rgba(184, 134, 11, 0.4);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s ease;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 
   .cultivator-wrapper:hover .hidden-stats {
@@ -440,10 +442,25 @@
   }
 
   .hidden-stats .stat-line {
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
 
   .hidden-stats .stat-line:last-child { margin-bottom: 0; }
+
+  /* 点击提示 */
+  .click-hint {
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .cultivator-wrapper:hover .click-hint { opacity: 1; }
 </style>
 </head>
 <body>
@@ -454,6 +471,7 @@
 
 <div class="cultivator-wrapper state-closed" id="cultivatorWrapper">
   <div class="hidden-stats" id="hiddenStats"></div>
+  <div class="click-hint">🖱️ 悬停看属性，等待事件出现</div>
   <div class="cultivator">
     <div class="head"></div>
     <div class="body"></div>
