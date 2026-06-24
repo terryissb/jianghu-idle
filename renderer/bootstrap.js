@@ -4,13 +4,13 @@ import { InteractionManager } from './interaction/InteractionManager.js';
 
 window.addEventListener('DOMContentLoaded', () => {
   console.log('========================');
-  console.log('Jianghu Idle v2.1 Boot');
+  console.log('Jianghu Idle v2.2 Boot');
   console.log('========================');
   console.log('[BOOT] start');
 
   const ui = new UIManager();
   const engine = new GameEngine(ui);
-  const interaction = new InteractionManager();
+  const interaction = new InteractionManager(ui);
 
   window.gameEngine = engine;
 

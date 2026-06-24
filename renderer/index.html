@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>修仙桌宠 v2.1</title>
+<title>修仙桌宠 v2.2</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -285,11 +285,150 @@
     color: #2d5a27;
     text-align: center;
   }
+
+  /* ==================== Meditation Button ==================== */
+  .meditation-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(184,134,11,0.4);
+    color: rgba(255,255,255,0.6);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+    z-index: 10000;
+  }
+  .meditation-btn:hover { background: rgba(184,134,11,0.3); color: #fff; }
+  .meditation-btn.active { background: rgba(61,122,55,0.5); border-color: #3d7a37; color: #fff; }
+
+  /* ==================== Panels ==================== */
+  .panel {
+    position: absolute;
+    bottom: 150px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    width: 280px;
+    max-height: 320px;
+    background: rgba(20, 16, 12, 0.95);
+    border: 1px solid rgba(184, 134, 11, 0.4);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 100001;
+    display: none;
+  }
+  .panel.show {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(184,134,11,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #b8860b;
+  }
+  .panel-close {
+    font-size: 18px;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+  .panel-close:hover { color: #fff; }
+
+  .panel-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(184,134,11,0.15);
+  }
+  .panel-tab {
+    flex: 1;
+    padding: 8px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+  }
+  .panel-tab:hover { color: rgba(255,255,255,0.7); }
+  .panel-tab.active { color: #b8860b; border-bottom: 2px solid #b8860b; }
+
+  .panel-tab-content {
+    display: none;
+    padding: 10px 12px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .panel-tab-content.active { display: block; }
+
+  .panel-content {
+    padding: 10px 12px;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+  .panel-empty {
+    text-align: center;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    padding: 20px 0;
+  }
+
+  /* History items */
+  .history-item {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .history-icon { font-size: 14px; width: 20px; text-align: center; }
+  .history-body { flex: 1; }
+  .history-header { display: flex; justify-content: space-between; margin-bottom: 2px; }
+  .history-title { font-size: 12px; color: rgba(255,255,255,0.8); }
+  .history-time { font-size: 10px; color: rgba(255,255,255,0.3); }
+  .history-result { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+  .history-realm { font-size: 10px; color: #b8860b; margin-top: 2px; }
+
+  /* Technique items */
+  .technique-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .technique-name { font-size: 12px; color: #b8860b; font-weight: 600; }
+  .technique-desc { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .technique-focus { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+  /* Realm panel */
+  .realm-current { text-align: center; padding: 10px 0; }
+  .realm-name { font-size: 18px; color: #b8860b; font-weight: 700; margin-bottom: 8px; }
+  .realm-progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  .realm-progress-fill { height: 100%; background: linear-gradient(90deg, #b8860b, #d4a024); border-radius: 3px; transition: width 0.5s ease; }
+  .realm-progress-text { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .realm-next { font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; margin: 8px 0; }
+  .realm-info { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.8; }
 </style>
 </head>
 <body>
 
 <div id="app">
+  <!-- Character Layer -->
   <div class="character-layer" id="characterLayer">
     <div class="drag-zone"></div>
     <div class="cultivator" id="cultivator">
@@ -302,8 +441,11 @@
     <div class="state-label" id="stateLabel">闭目修炼</div>
   </div>
 
+  <!-- UI Layer -->
   <div class="ui-layer" id="uiLayer">
     <div class="hidden-stats" id="hiddenStats"></div>
+
+    <!-- Event Bubble -->
     <div class="event-bubble" id="eventBubble">
       <div class="bubble-title" id="bubbleTitle"></div>
       <div style="text-align:center"><span class="bubble-type" id="bubbleType"></span></div>
@@ -311,6 +453,45 @@
       <div class="choices" id="choices"></div>
       <div class="choice-result" id="choiceResult"></div>
     </div>
+
+    <!-- History Panel -->
+    <div class="panel" id="historyPanel">
+      <div class="panel-header">
+        <span class="panel-title">📜 修仙历程</span>
+        <span class="panel-close" onclick="document.getElementById('historyPanel').classList.remove('show')">✕</span>
+      </div>
+      <div class="panel-content" id="historyContent"></div>
+    </div>
+
+    <!-- Technique Panel -->
+    <div class="panel" id="techniquePanel">
+      <div class="panel-header">
+        <span class="panel-title">📖 功法</span>
+        <span class="panel-close" onclick="document.getElementById('techniquePanel').classList.remove('show')">✕</span>
+      </div>
+      <div class="panel-tabs">
+        <div class="panel-tab active" data-tab="active">已激活</div>
+        <div class="panel-tab" data-tab="all">已习得</div>
+      </div>
+      <div class="panel-tab-content active" data-tab="active">
+        <div class="technique-active" id="techniqueActive"></div>
+      </div>
+      <div class="panel-tab-content" data-tab="all">
+        <div class="technique-all" id="techniqueAll"></div>
+      </div>
+    </div>
+
+    <!-- Realm Panel -->
+    <div class="panel" id="realmPanel">
+      <div class="panel-header">
+        <span class="panel-title">🌌 境界</span>
+        <span class="panel-close" onclick="document.getElementById('realmPanel').classList.remove('show')">✕</span>
+      </div>
+      <div class="panel-content" id="realmContent"></div>
+    </div>
+
+    <!-- Meditation Toggle -->
+    <button class="meditation-btn" id="meditationBtn" title="静修模式">🌿</button>
   </div>
 </div>
 

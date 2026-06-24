@@ -32,7 +32,7 @@ export const ELEMENTS = {
   earth: '土'
 };
 
-export const State = {
+export let State = {
   realm: 0,
   exp: 0,
   hp: 100,
@@ -46,16 +46,21 @@ export const State = {
   gold: 0,
   eventCount: 0,
   totalTime: 0,
+  meditationMode: false,
+  techniques: { active: [], learned: [] },
+  history: { events: [] },
   lastSave: Date.now()
 };
 
 export function loadState() {
-  const saved = localStorage.getItem('xiuzhen_save');
+  const saved = localStorage.getItem('xiuzhen_save_v2');
   if (saved) {
     try {
       const data = JSON.parse(saved);
       const offline = Math.floor((Date.now() - data.lastSave) / 1000);
-      Object.assign(State, data);
+      State = { ...State, ...data };
+      if (!State.techniques) State.techniques = { active: [], learned: [] };
+      if (!State.history) State.history = { events: [] };
       if (offline > 10) {
         const growth = ROOTS[State.spiritualRoot].growth;
         const gain = Math.floor(offline * 0.3 * growth);
@@ -78,11 +83,36 @@ export function loadState() {
 
 export function saveState() {
   State.lastSave = Date.now();
-  localStorage.setItem('xiuzhen_save', JSON.stringify(State));
+  localStorage.setItem('xiuzhen_save_v2', JSON.stringify(State));
 }
 
 export function formatTime(s) {
   if (s < 60) return s + '秒';
   if (s < 3600) return Math.floor(s / 60) + '分';
   return Math.floor(s / 3600) + '小时';
+}
+
+export function formatTimestamp(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+
+export function addHistory(entry) {
+  if (!State.history) State.history = { events: [] };
+  State.history.events.unshift({
+    time: Date.now(),
+    ...entry
+  });
+  if (State.history.events.length > 50) {
+    State.history.events = State.history.events.slice(0, 50);
+  }
+}
+
+export function getRealmName() {
+  return REALMS[State.realm].name;
+}
+
+export function getRealmProgress() {
+  const realm = REALMS[State.realm];
+  return Math.min(100, Math.floor(State.exp / realm.expNeed * 100));
 }
