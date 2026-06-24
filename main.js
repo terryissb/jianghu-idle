@@ -10,10 +10,10 @@ function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
 
   mainWindow = new BrowserWindow({
-    width: 300,
-    height: 400,
-    x: width - 320,
-    y: height - 440,
+    width: 320,
+    height: 380,
+    x: width - 340,
+    y: height - 420,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
@@ -26,12 +26,10 @@ function createWindow() {
     }
   });
 
-  // 使用绝对路径加载 pet.html
   const htmlPath = path.join(__dirname, 'pet.html');
   console.log('[main] loading:', htmlPath);
   mainWindow.loadFile(htmlPath);
 
-  // 打开 DevTools
   mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   mainWindow.on('closed', () => {
@@ -43,7 +41,6 @@ app.whenReady().then(() => {
   console.log('[main] app ready');
   createWindow();
 
-  // 全局快捷键 Ctrl+Shift+J 显示/隐藏
   globalShortcut.register('CommandOrControl+Shift+J', () => {
     if (mainWindow) {
       if (mainWindow.isVisible()) {

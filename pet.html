@@ -7,15 +7,6 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  :root {
-    --gold: #b8860b;
-    --gold-light: #daa520;
-    --jade: #2d5a27;
-    --red: #b33939;
-    --blue: #2c4a6e;
-    --purple: #6b3a7d;
-  }
-
   body {
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background: transparent;
@@ -29,34 +20,32 @@
     overflow: hidden;
   }
 
-  /* 整个容器 */
-  .pet-container {
+  /* ==================== Layer A: Character ==================== */
+  .character-layer {
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: 120px;
+    height: 120px;
   }
 
-  /* 可拖动区域（仅小人身体） */
   .drag-zone {
     position: absolute;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
     -webkit-app-region: drag;
     z-index: 1;
     border-radius: 50%;
   }
 
-  /* 打坐小人 */
   .cultivator {
     position: absolute;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
     animation: breathe 3s ease-in-out infinite;
   }
 
@@ -66,8 +55,8 @@
   }
 
   .cultivator .head {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     background: radial-gradient(circle at 40% 40%, #f5d0a9, #d4a574);
     border-radius: 50%;
     position: absolute;
@@ -77,9 +66,7 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     z-index: 2;
   }
-
-  .cultivator .head::before,
-  .cultivator .head::after {
+  .cultivator .head::before, .cultivator .head::after {
     content: '';
     position: absolute;
     width: 3px;
@@ -88,51 +75,47 @@
     border-radius: 50%;
     top: 9px;
   }
-  .cultivator .head::before { left: 6px; }
-  .cultivator .head::after { right: 6px; }
+  .cultivator .head::before { left: 5px; }
+  .cultivator .head::after { right: 5px; }
 
   .cultivator .body {
-    width: 36px;
-    height: 28px;
+    width: 34px;
+    height: 26px;
     background: linear-gradient(180deg, #4a6a8a, #2a3a5a);
     border-radius: 10px 10px 4px 4px;
     position: absolute;
-    top: 20px;
+    top: 18px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1;
   }
-
   .cultivator .legs {
-    width: 44px;
-    height: 14px;
+    width: 42px;
+    height: 12px;
     background: linear-gradient(180deg, #3a5060, #1a3040);
-    border-radius: 0 0 20px 20px;
+    border-radius: 0 0 18px 18px;
     position: absolute;
     bottom: 2px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 1;
   }
-
   .cultivator .arms {
-    width: 40px;
-    height: 8px;
+    width: 38px;
+    height: 7px;
     background: linear-gradient(90deg, #4a6a8a, #2a3a5a);
     border-radius: 4px;
     position: absolute;
-    top: 26px;
+    top: 24px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 3;
   }
-
-  .cultivator .arms::before,
-  .cultivator .arms::after {
+  .cultivator .arms::before, .cultivator .arms::after {
     content: '';
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     background: #f5d0a9;
     border-radius: 50%;
     top: -1px;
@@ -140,26 +123,23 @@
   .cultivator .arms::before { left: -2px; }
   .cultivator .arms::after { right: -2px; }
 
-  /* 真气光晕 */
   .aura {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90px;
-    height: 90px;
+    width: 85px;
+    height: 85px;
     border-radius: 50%;
     border: 1px solid rgba(0, 255, 136, 0.3);
     animation: auraPulse 2s ease-in-out infinite;
     pointer-events: none;
   }
-
   @keyframes auraPulse {
     0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
     50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.1; }
   }
 
-  /* 状态标签 */
   .state-label {
     position: absolute;
     bottom: -18px;
@@ -172,9 +152,15 @@
     transition: opacity 0.5s ease;
     pointer-events: none;
   }
-  .pet-container:hover .state-label { opacity: 1; }
+  .character-layer:hover .state-label { opacity: 1; }
 
-  /* 隐藏属性 */
+  /* ==================== Layer B: UI ==================== */
+  .ui-layer {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
+
   .hidden-stats {
     position: absolute;
     bottom: -95px;
@@ -190,23 +176,20 @@
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s ease;
-    z-index: 50;
   }
-  .pet-container:hover .hidden-stats {
+  .character-layer:hover .hidden-stats {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
   .stat-line { margin-bottom: 4px; }
-  .stat-line:last-child { margin-bottom: 0; }
 
-  /* 事件气泡 */
   .event-bubble {
     position: absolute;
-    bottom: 140px;
+    bottom: 135px;
     left: 50%;
     transform: translateX(-50%) translateY(10px);
     background: rgba(245, 240, 232, 0.97);
-    border: 2px solid var(--gold);
+    border: 2px solid #b8860b;
     border-radius: 14px;
     padding: 14px;
     width: 240px;
@@ -234,12 +217,12 @@
     transform: translateX(-50%);
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid var(--gold);
+    border-top: 10px solid #b8860b;
   }
 
   .bubble-title {
     font-weight: 700;
-    color: var(--red);
+    color: #b33939;
     font-size: 15px;
     margin-bottom: 6px;
     text-align: center;
@@ -252,16 +235,11 @@
     font-weight: 700;
     margin-bottom: 8px;
   }
-  .type-daily { background: var(--blue); color: #fff; }
-  .type-qi { background: var(--purple); color: #fff; }
-  .type-crisis { background: var(--red); color: #fff; }
-  .bubble-desc {
-    color: #555;
-    margin-bottom: 10px;
-    text-align: center;
-  }
+  .type-daily { background: #2c4a6e; color: #fff; }
+  .type-qi { background: #6b3a7d; color: #fff; }
+  .type-crisis { background: #b33939; color: #fff; }
+  .bubble-desc { color: #555; margin-bottom: 10px; text-align: center; }
 
-  /* 选择按钮 */
   .choices { display: flex; flex-direction: column; gap: 6px; }
   .choice-btn {
     background: rgba(255,255,255,0.5);
@@ -274,18 +252,16 @@
     transition: all 0.2s ease;
     text-align: left;
     color: #1a1a1a;
+    pointer-events: auto;
   }
-  .choice-btn:hover {
-    background: rgba(184, 134, 11, 0.1);
-    border-color: var(--gold);
-  }
+  .choice-btn:hover { background: rgba(184, 134, 11, 0.1); border-color: #b8860b; }
   .choice-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .choice-label {
     display: inline-block;
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--gold);
+    background: #b8860b;
     color: #fff;
     font-weight: 700;
     font-size: 11px;
@@ -298,14 +274,15 @@
     padding-top: 10px;
     border-top: 1px dashed rgba(184,134,11,0.3);
     font-size: 12px;
-    color: var(--jade);
+    color: #2d5a27;
     text-align: center;
   }
 </style>
 </head>
 <body>
 
-<div class="pet-container" id="petContainer">
+<!-- ==================== Layer A: Character ==================== -->
+<div class="character-layer" id="characterLayer">
   <div class="drag-zone"></div>
   <div class="cultivator" id="cultivator">
     <div class="head"></div>
@@ -316,7 +293,10 @@
   <div class="aura"></div>
   <div class="state-label" id="stateLabel">闭目修炼</div>
   <div class="hidden-stats" id="hiddenStats"></div>
+</div>
 
+<!-- ==================== Layer B: UI ==================== -->
+<div class="ui-layer" id="uiLayer">
   <div class="event-bubble" id="eventBubble">
     <div class="bubble-title" id="bubbleTitle"></div>
     <div style="text-align:center"><span class="bubble-type" id="bubbleType"></span></div>
@@ -327,7 +307,8 @@
 </div>
 
 <script>
-// ==================== 配置 ====================
+// ==================== Layer C: Game Engine ====================
+
 const REALMS = [
   { name: '炼气期', expNeed: 100 },
   { name: '筑基期', expNeed: 500 },
@@ -340,14 +321,14 @@ const REALMS = [
   { name: '真仙', expNeed: 999999999 }
 ];
 
-const SPIRITUAL_ROOTS = {
+const ROOTS = {
   heavenly: { name: '天灵根', growth: 2.0 },
   earth: { name: '地灵根', growth: 1.5 },
   mixed: { name: '杂灵根', growth: 1.0 },
   mutated: { name: '变异灵根', growth: 1.8 }
 };
 
-const MIND_STATES = {
+const MINDS = {
   stable: { name: '心境平稳', color: '#3d7a37' },
   turbulent: { name: '心境动荡', color: '#b8860b' },
   enlightenment: { name: '顿悟', color: '#6b3a7d' },
@@ -360,14 +341,14 @@ const EVENTS = [
     desc: '修炼时灵气突然逆流，经脉隐隐作痛。',
     type: 'daily',
     choices: [
-      { id: 'A', text: '强行镇压', risk: 'high' },
-      { id: 'B', text: '顺势引导', risk: 'low' },
-      { id: 'C', text: '暂停修炼', risk: 'none' }
+      { id: 'A', text: '强行镇压' },
+      { id: 'B', text: '顺势引导' },
+      { id: 'C', text: '暂停修炼' }
     ],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.6 ? {success:true,exp:40,msg:'镇压成功，修为大涨！'} : {success:false,exp:-10,msg:'镇压失败，经脉受损。'};
-      if (c === 'B') return {success:true,exp:20,msg:'顺水推舟，修为稳步提升。'};
-      return {success:true,exp:5,msg:'暂避锋芒，待灵气平息。'};
+      if (c === 'A') return Math.random()<0.6 ? {s:true,exp:40,msg:'镇压成功，修为大涨！'} : {s:false,exp:-10,msg:'镇压失败，经脉受损。'};
+      if (c === 'B') return {s:true,exp:20,msg:'顺水推舟，修为稳步提升。'};
+      return {s:true,exp:5,msg:'暂避锋芒，待灵气平息。'};
     }
   },
   {
@@ -375,14 +356,14 @@ const EVENTS = [
     desc: '闭关时，往日遗憾化作幻象，缠绕心神。',
     type: 'daily',
     choices: [
-      { id: 'A', text: '直面心魔', risk: 'high' },
-      { id: 'B', text: '诵念清心咒', risk: 'low' },
-      { id: 'C', text: '引入幻境', risk: 'extreme' }
+      { id: 'A', text: '直面心魔' },
+      { id: 'B', text: '诵念清心咒' },
+      { id: 'C', text: '引入幻境' }
     ],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.5 ? {success:true,exp:50,msg:'破茧而出，心魔尽消！'} : {success:false,exp:-20,msg:'心魔反噬。'};
-      if (c === 'B') return {success:true,exp:10,msg:'清心咒洗涤心神。'};
-      return Math.random()<0.3 ? {success:true,exp:100,msg:'置之死地而后生！'} : {success:false,exp:-50,msg:'引魔入体。'};
+      if (c === 'A') return Math.random()<0.5 ? {s:true,exp:50,msg:'破茧而出，心魔尽消！'} : {s:false,exp:-20,msg:'心魔反噬。'};
+      if (c === 'B') return {s:true,exp:10,msg:'清心咒洗涤心神。'};
+      return Math.random()<0.3 ? {s:true,exp:100,msg:'置之死地而后生！'} : {s:false,exp:-50,msg:'引魔入体。'};
     }
   },
   {
@@ -390,14 +371,14 @@ const EVENTS = [
     desc: '观云卷云舒，忽有所感，大道之光照入灵台。',
     type: 'daily',
     choices: [
-      { id: 'A', text: '全力感悟', risk: 'medium' },
-      { id: 'B', text: '徐徐图之', risk: 'low' },
-      { id: 'C', text: '记录感悟', risk: 'none' }
+      { id: 'A', text: '全力感悟' },
+      { id: 'B', text: '徐徐图之' },
+      { id: 'C', text: '记录感悟' }
     ],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.5 ? {success:true,exp:80,msg:'灵光一闪，瓶颈松动！'} : {success:false,exp:20,msg:'时机未到。'};
-      if (c === 'B') return {success:true,exp:20,msg:'稳扎稳打，根基扎实。'};
-      return {success:true,luck:5,msg:'感悟刻入玉简，气运提升。'};
+      if (c === 'A') return Math.random()<0.5 ? {s:true,exp:80,msg:'灵光一闪，瓶颈松动！'} : {s:false,exp:20,msg:'时机未到。'};
+      if (c === 'B') return {s:true,exp:20,msg:'稳扎稳打，根基扎实。'};
+      return {s:true,luck:5,msg:'感悟刻入玉简，气运提升。'};
     }
   },
   {
@@ -405,14 +386,14 @@ const EVENTS = [
     desc: '雾中走来一位白发老者，自称是云游散仙。',
     type: 'qi',
     choices: [
-      { id: 'A', text: '跪求指点', risk: 'medium' },
-      { id: 'B', text: '谨慎试探', risk: 'low' },
-      { id: 'C', text: '婉言谢绝', risk: 'none' }
+      { id: 'A', text: '跪求指点' },
+      { id: 'B', text: '谨慎试探' },
+      { id: 'C', text: '婉言谢绝' }
     ],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.7 ? {success:true,exp:60,msg:'仙人授你心法！'} : {success:false,msg:'老者收了灵石消失。'};
-      if (c === 'B') return Math.random()<0.6 ? {success:true,exp:40,msg:'传了半部心法。'} : {success:false,msg:'老者摇头离去。'};
-      return {success:true,msg:'虽无所得，亦无失。'};
+      if (c === 'A') return Math.random()<0.7 ? {s:true,exp:60,msg:'仙人授你心法！'} : {s:false,msg:'老者收了灵石消失。'};
+      if (c === 'B') return Math.random()<0.6 ? {s:true,exp:40,msg:'传了半部心法。'} : {s:false,msg:'老者摇头离去。'};
+      return {s:true,msg:'虽无所得，亦无失。'};
     }
   },
   {
@@ -420,96 +401,93 @@ const EVENTS = [
     desc: '一位魔修发现你的洞府，欲夺你灵根炼药！',
     type: 'crisis',
     choices: [
-      { id: 'A', text: '拼死一战', risk: 'extreme' },
-      { id: 'B', text: '弃洞逃遁', risk: 'low' },
-      { id: 'C', text: '以灵石贿赂', risk: 'medium' }
+      { id: 'A', text: '拼死一战' },
+      { id: 'B', text: '弃洞逃遁' },
+      { id: 'C', text: '以灵石贿赂' }
     ],
     resolve: (c) => {
-      if (c === 'A') return Math.random()<0.4 ? {success:true,exp:100,msg:'反杀魔修，获其储物袋！'} : {success:false,exp:-30,msg:'重伤逃遁。'};
-      if (c === 'B') return {success:true,msg:'保全性命。'};
-      return Math.random()<0.5 ? {success:true,msg:'破财消灾。'} : {success:false,exp:-20,msg:'魔修贪得无厌。'};
+      if (c === 'A') return Math.random()<0.4 ? {s:true,exp:100,msg:'反杀魔修，获其储物袋！'} : {s:false,exp:-30,msg:'重伤逃遁。'};
+      if (c === 'B') return {s:true,msg:'保全性命。'};
+      return Math.random()<0.5 ? {s:true,msg:'破财消灾。'} : {s:false,exp:-20,msg:'魔修贪得无厌。'};
     }
   }
 ];
 
-// ==================== 状态 ====================
 let player = {
   realm: 0, exp: 0,
   hp: 100, maxHp: 100,
   mp: 50, maxMp: 50,
-  elements: { metal:0, wood:0, water:0, fire:0, earth:0 },
   spiritualRoot: 'mixed',
   mindState: 'stable',
   luck: 10, gold: 0,
   eventCount: 0,
   totalTime: 0,
-  lastSave: Date.now(),
-  nextEvent: 0
+  lastSave: Date.now()
 };
 
 let eventInProgress = false;
 let eventTimer = null;
 let gameTimer = null;
 
-// ==================== 初始化 ====================
-function init() {
-  console.log('[init] start');
+// ==================== 1. initCharacter() ====================
+function initCharacter() {
+  console.log('[Character] loaded');
+  const roots = Object.keys(ROOTS);
+  player.spiritualRoot = roots[Math.floor(Math.random() * roots.length)];
+  console.log('[Character] root:', player.spiritualRoot);
+}
+
+// ==================== 2. mountUI() ====================
+function mountUI() {
+  console.log('[UI] mounting...');
+  const bubble = document.getElementById('eventBubble');
+  const stats = document.getElementById('hiddenStats');
+  if (!bubble) console.error('[UI] eventBubble NOT FOUND');
+  if (!stats) console.error('[UI] hiddenStats NOT FOUND');
+  console.log('[UI] mounted');
+}
+
+// ==================== 3. initEventEngine() ====================
+function initEventEngine() {
+  console.log('[Engine] started');
   const saved = localStorage.getItem('xiuzhen_save');
   if (saved) {
     try {
       const data = JSON.parse(saved);
-      const offline = Math.floor((Date.now()-data.lastSave)/1000);
+      const offline = Math.floor((Date.now() - data.lastSave) / 1000);
       player = data;
       if (offline > 10) {
-        const gain = Math.floor(offline * 0.3 * SPIRITUAL_ROOTS[player.spiritualRoot].growth);
+        const gain = Math.floor(offline * 0.3 * ROOTS[player.spiritualRoot].growth);
         player.exp += gain;
-        showBubble('离线挂机', `离线 ${formatTime(offline)}，修为 +${gain}`, true);
+        showSystemBubble('离线挂机', `离线 ${formatTime(offline)}，修为 +${gain}`);
       }
-      console.log('[init] loaded save');
-    } catch(e) {
-      console.error('[init] load failed', e);
-      resetPlayer();
+      console.log('[Engine] save loaded');
+    } catch (e) {
+      console.error('[Engine] load failed', e);
     }
-  } else {
-    resetPlayer();
   }
-
   updateStats();
-  startLoop();
   scheduleEvent();
-  console.log('[init] complete');
 }
 
-function resetPlayer() {
-  const roots = Object.keys(SPIRITUAL_ROOTS);
-  player.spiritualRoot = roots[Math.floor(Math.random()*roots.length)];
-  const els = ['metal','wood','water','fire','earth'];
-  player.elements[els[Math.floor(Math.random()*5)]] = rand(5,15);
-  console.log('[init] new player, root:', player.spiritualRoot);
-}
-
-function save() {
-  player.lastSave = Date.now();
-  localStorage.setItem('xiuzhen_save', JSON.stringify(player));
-}
-
-// ==================== 循环 ====================
-function startLoop() {
+// ==================== 4. startGameLoop() ====================
+function startGameLoop() {
+  console.log('[Loop] started');
   gameTimer = setInterval(() => {
-    const growth = SPIRITUAL_ROOTS[player.spiritualRoot].growth;
-    const bonus = player.mindState==='enlightenment'?1.2:player.mindState==='demon'?0.7:1;
+    const growth = ROOTS[player.spiritualRoot].growth;
+    const bonus = player.mindState === 'enlightenment' ? 1.2 : player.mindState === 'demon' ? 0.7 : 1;
     player.exp += 0.5 * growth * bonus;
     player.hp = Math.min(player.maxHp, player.hp + 0.1);
-    player.mp = Math.min(player.maxMp, player.mp + 0.05);
     player.totalTime++;
     checkBreakthrough();
     save();
   }, 1000);
 }
 
+// ==================== Engine tick ====================
 function scheduleEvent() {
-  const delay = rand(10000, 30000); // 10-30秒测试用
-  console.log('[event] next in', (delay/1000).toFixed(0), 's');
+  const delay = rand(10000, 30000); // 10-30秒测试
+  console.log('[Event] next in', (delay / 1000).toFixed(0), 's');
   if (eventTimer) clearTimeout(eventTimer);
   eventTimer = setTimeout(() => {
     if (!eventInProgress) triggerEvent();
@@ -517,14 +495,15 @@ function scheduleEvent() {
 }
 
 function triggerEvent() {
-  console.log('[event] triggered');
+  console.log('[Event] triggered');
   eventInProgress = true;
-  const event = EVENTS[Math.floor(Math.random()*EVENTS.length)];
-  showEvent(event);
+  const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+  renderEvent(event);
 }
 
-// ==================== UI ====================
-function showEvent(event) {
+// ==================== UI Rendering ====================
+function renderEvent(event) {
+  console.log('[UI] renderEvent:', event.title);
   const bubble = document.getElementById('eventBubble');
   const title = document.getElementById('bubbleTitle');
   const type = document.getElementById('bubbleType');
@@ -533,8 +512,8 @@ function showEvent(event) {
   const result = document.getElementById('choiceResult');
 
   title.textContent = event.title;
-  type.textContent = event.type==='daily'?'日常':event.type==='qi'?'奇遇':'危机';
-  type.className = 'bubble-type type-'+event.type;
+  type.textContent = event.type === 'daily' ? '日常' : event.type === 'qi' ? '奇遇' : '危机';
+  type.className = 'bubble-type type-' + event.type;
   desc.textContent = event.desc;
   result.innerHTML = '';
   choices.innerHTML = '';
@@ -543,20 +522,24 @@ function showEvent(event) {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerHTML = `<span class="choice-label">${ch.id}</span>${ch.text}`;
-    btn.onclick = () => resolve(event, ch.id);
+    btn.onclick = function() {
+      console.log('[Click] received:', ch.id);
+      handleChoice(event, ch.id);
+    };
     choices.appendChild(btn);
   });
 
   bubble.classList.add('show');
   setState('受扰');
   player.eventCount++;
+  console.log('[UI] bubble shown');
 }
 
-function resolve(event, choiceId) {
-  console.log('[event] choice', choiceId);
+function handleChoice(event, choiceId) {
+  console.log('[Engine] resolving choice:', choiceId);
   const res = event.resolve(choiceId);
   document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
-  document.getElementById('choiceResult').innerHTML = `<strong>${res.success?'✓':'✗'}</strong> ${res.msg}`;
+  document.getElementById('choiceResult').innerHTML = `<strong>${res.s ? '✓' : '✗'}</strong> ${res.msg}`;
 
   if (res.exp) player.exp += res.exp;
   if (res.luck) player.luck += res.luck;
@@ -564,6 +547,7 @@ function resolve(event, choiceId) {
   checkBreakthrough();
   updateStats();
   save();
+  console.log('[Engine] resolved:', res.msg);
 
   setTimeout(() => {
     document.getElementById('eventBubble').classList.remove('show');
@@ -579,9 +563,9 @@ function setState(text) {
 
 function updateStats() {
   const realm = REALMS[player.realm];
-  const root = SPIRITUAL_ROOTS[player.spiritualRoot];
-  const mind = MIND_STATES[player.mindState];
-  const pct = Math.min(100, Math.floor(player.exp/realm.expNeed*100));
+  const root = ROOTS[player.spiritualRoot];
+  const mind = MINDS[player.mindState];
+  const pct = Math.min(100, Math.floor(player.exp / realm.expNeed * 100));
   document.getElementById('hiddenStats').innerHTML = `
     <div class="stat-line">${realm.name} | ${Math.floor(player.exp)}/${realm.expNeed} (${pct}%)</div>
     <div class="stat-line">灵根: ${root.name} | 心境: <span style="color:${mind.color}">${mind.name}</span></div>
@@ -589,7 +573,7 @@ function updateStats() {
   `;
 }
 
-function showBubble(title, desc, success) {
+function showSystemBubble(title, desc) {
   const bubble = document.getElementById('eventBubble');
   document.getElementById('bubbleTitle').textContent = title;
   document.getElementById('bubbleType').textContent = '系统';
@@ -604,31 +588,48 @@ function showBubble(title, desc, success) {
 function checkBreakthrough() {
   const realm = REALMS[player.realm];
   if (player.exp >= realm.expNeed) {
-    const root = SPIRITUAL_ROOTS[player.spiritualRoot].growth;
-    const rate = 0.5 + (root-1)*0.2 + player.luck*0.001;
+    const rate = 0.5 + (ROOTS[player.spiritualRoot].growth - 1) * 0.2 + player.luck * 0.001;
     if (Math.random() < rate) {
       player.exp -= realm.expNeed;
       player.realm++;
-      player.maxHp += 50*(player.realm+1);
-      player.maxMp += 30*(player.realm+1);
+      player.maxHp += 50 * (player.realm + 1);
+      player.maxMp += 30 * (player.realm + 1);
       player.hp = player.maxHp;
-      showBubble('境界突破', `突破至「${REALMS[player.realm].name}」！`, true);
+      showSystemBubble('境界突破', `突破至「${REALMS[player.realm].name}」！`);
     } else {
-      player.exp = Math.floor(player.exp*0.5);
-      showBubble('突破失败', '冲击瓶颈失败，修为受损。', false);
+      player.exp = Math.floor(player.exp * 0.5);
+      showSystemBubble('突破失败', '冲击瓶颈失败，修为受损。');
     }
   }
 }
 
-function rand(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
-function formatTime(s) {
-  if (s<60) return s+'秒';
-  if (s<3600) return Math.floor(s/60)+'分';
-  return Math.floor(s/3600)+'小时';
+function save() {
+  player.lastSave = Date.now();
+  localStorage.setItem('xiuzhen_save', JSON.stringify(player));
 }
 
-window.addEventListener('beforeunload', () => { player.totalTime++; save(); });
-document.addEventListener('DOMContentLoaded', init);
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function formatTime(s) {
+  if (s < 60) return s + '秒';
+  if (s < 3600) return Math.floor(s / 60) + '分';
+  return Math.floor(s / 3600) + '小时';
+}
+
+// ==================== Strict Boot Sequence ====================
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('========================');
+  console.log('Jianghu Idle v2.0 Boot');
+  console.log('========================');
+  initCharacter();
+  mountUI();
+  initEventEngine();
+  startGameLoop();
+  console.log('========================');
+  console.log('Boot Complete');
+  console.log('========================');
+});
+
+window.addEventListener('beforeunload', () => { save(); });
 </script>
 </body>
 </html>
