@@ -14,3 +14,18 @@ Thumbs.db
 # 忽略临时文件
 *.tmp
 *.temp
+
+# 忽略 Node.js 依赖
+node_modules/
+package-lock.json
+yarn.lock
+
+# 忽略 Electron 构建输出
+dist/
+build/
+out/
+
+# 忽略图标素材
+icon.png
+icon.icns
+icon.ico
