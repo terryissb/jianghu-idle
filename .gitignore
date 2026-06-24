@@ -20,10 +20,12 @@ node_modules/
 package-lock.json
 yarn.lock
 
-# 忽略 Electron 构建输出
+# 忽略 Electron 构建输出和预编译二进制
 dist/
 build/
 out/
+electron-bin/
+electron.zip
 
 # 忽略图标素材
 icon.png
