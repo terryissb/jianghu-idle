@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>江湖挂机录 - 武侠修炼</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ink: #1a1a1a;
+            --paper: #f5f0e8;
+            --paper-dark: #e8e0d0;
+            --red: #b33939;
+            --red-light: #c44545;
+            --gold: #b8860b;
+            --gold-light: #daa520;
+            --jade: #2d5a27;
+            --jade-light: #3d7a37;
+            --blue: #2c4a6e;
+            --purple: #6b3a7d;
+            --border: #c9b99a;
+            --shadow: rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Noto Serif SC', 'SimSun', 'STSong', serif;
+            background: #1a1a1a url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.03"><rect fill="%23fff" width="100" height="100"/></svg>');
+            min-height: 100vh;
+            color: var(--ink);
+            overflow-x: hidden;
+        }
+
+        /* 顶部装饰条 */
+        .header-bar {
+            background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            border-bottom: 3px solid var(--gold);
+            padding: 12px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-bar h1 {
+            color: var(--gold-light);
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header-bar::before,
+        .header-bar::after {
+            content: '◆';
+            color: var(--gold);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+        }
+
+        .header-bar::before { left: 20%; }
+        .header-bar::after { right: 20%; }
+
+        /* 主容器 */
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr 280px;
+            gap: 20px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: var(--paper);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px var(--shadow);
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; right: 4px; bottom: 4px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--red);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 角色面板 */
+        .character-card .name-section {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .character-name {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--ink);
+        }
+
+        .realm-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 6px;
+            box-shadow: 0 2px 6px rgba(184, 134, 11, 0.3);
+        }
+
+        .realm-badge.realm-8 { background: linear-gradient(135deg, #8b0000, #dc143c); }
+        .realm-badge.realm-7 { background: linear-gradient(135deg, #6b3a7d, #9b59b6); }
+        .realm-badge.realm-6 { background: linear-gradient(135deg, #2c4a6e, #4a6fa5); }
+        .realm-badge.realm-5 { background: linear-gradient(135deg, #2d5a27, #3d7a37); }
+        .realm-badge.realm-4 { background: linear-gradient(135deg, #b8860b, #daa520); }
+        .realm-badge.realm-3 { background: linear-gradient(135deg, #808080, #a0a0a0); }
+        .realm-badge.realm-2 { background: linear-gradient(135deg, #8b7355, #a08060); }
+        .realm-badge.realm-1 { background: linear-gradient(135deg, #666, #888); }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--paper-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--jade), var(--jade-light));
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ink);
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+            white-space: nowrap;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .stat-row:last-child { border-bottom: none; }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .stat-value.hp { color: var(--red); }
+        .stat-value.mp { color: var(--blue); }
+        .stat-value.atk { color: var(--red-light); }
+        .stat-value.def { color: var(--jade); }
+        .stat-value.gold { color: var(--gold); }
+
+        /* 日志区域 */
+        .log-card {
+            min-height: 500px;
+        }
+
+        .log-container {
+            height: 460px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: var(--paper-dark);
+            border-radius: 3px;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .log-entry {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease;
+            border-left: 3px solid var(--border);
+            background: rgba(0,0,0,0.03);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .log-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .log-desc {
+            color: #555;
+        }
+
+        .log-success { border-left-color: var(--jade); background: rgba(45, 90, 39, 0.08); }
+        .log-fail { border-left-color: var(--red); background: rgba(179, 57, 57, 0.08); }
+        .log-qi { border-left-color: var(--purple); background: rgba(107, 58, 125, 0.08); }
+        .log-crisis { border-left-color: var(--gold); background: rgba(184, 134, 11, 0.08); }
+
+        .log-entry .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .tag-success { background: var(--jade); color: #fff; }
+        .tag-fail { background: var(--red); color: #fff; }
+        .tag-qi { background: var(--purple); color: #fff; }
+        .tag-crisis { background: var(--gold); color: #fff; }
+        .tag-daily { background: var(--blue); color: #fff; }
+
+        .tag-white { background: #ccc; color: #333; }
+        .tag-blue { background: #4a6fa5; color: #fff; }
+        .tag-purple { background: #6b3a7d; color: #fff; }
+        .tag-gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #fff; }
+
+        .reward-line {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border);
+            font-size: 13px;
+            color: #555;
+        }
+
+        .reward-line .reward-item {
+            display: inline-block;
+            margin-right: 12px;
+        }
+
+        .reward-line .reward-item.positive { color: var(--jade); font-weight: 700; }
+        .reward-line .reward-item.negative { color: var(--red); font-weight: 700; }
+
+        /* 武学面板 */
+        .skill-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .skill-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .skill-list::-webkit-scrollbar-track {
+            background: var(--paper-dark);
+        }
+
+        .skill-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+
+        .skill-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.5);
+            transition: all 0.2s ease;
+        }
+
+        .skill-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .skill-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .skill-name.white { color: #666; }
+        .skill-name.blue { color: #2c4a6e; }
+        .skill-name.purple { color: #6b3a7d; }
+        .skill-name.gold { color: #b8860b; }
+
+        .skill-desc {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .skill-bonus {
+            font-size: 12px;
+            color: var(--jade);
+            margin-top: 4px;
+        }
+
+        /* 底部状态栏 */
+        .status-bar {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--paper);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .status-left {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .status-item span {
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .offline-info {
+            background: linear-gradient(135deg, var(--purple), #8b5a9b);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 按钮 */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            background: var(--paper-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: var(--border);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .btn-danger:hover {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-primary {
+            border-color: var(--jade);
+            color: var(--jade);
+        }
+
+        .btn-primary:hover {
+            background: var(--jade);
+            color: #fff;
+        }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            .status-bar { grid-column: 1; }
+        }
+
+        /* 浮动通知 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+            max-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        .toast-gold { background: linear-gradient(135deg, var(--gold), var(--gold-light)); }
+        .toast-purple { background: linear-gradient(135deg, var(--purple), #8b5a9b); }
+        .toast-blue { background: linear-gradient(135deg, var(--blue), #4a6fa5); }
+        .toast-success { background: linear-gradient(135deg, var(--jade), var(--jade-light)); }
+        .toast-danger { background: linear-gradient(135deg, var(--red), var(--red-light)); }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <h1>江 湖 挂 机 录</h1>
+    </div>
+
+    <div class="game-container">
+        <!-- 左侧：角色面板 -->
+        <div class="card character-card">
+            <div class="card-title">
+                <span>◈</span> 角色面板
+            </div>
+            <div class="name-section">
+                <div class="character-name" id="charName">无名侠客</div>
+                <div class="realm-badge" id="realmBadge">凡人</div>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">修为</span>
+                <span class="stat-value" id="expValue">0 / 100</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="expBar" style="width: 0%"></div>
+                <div class="progress-text" id="expText">0%</div>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">气血</span>
+                <span class="stat-value hp" id="hpValue">100 / 100</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="hpBar" style="width: 100%; background: linear-gradient(90deg, #b33939, #c44545);"></div>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">内力</span>
+                <span class="stat-value mp" id="mpValue">50 / 50</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="mpBar" style="width: 100%; background: linear-gradient(90deg, #2c4a6e, #4a6fa5);"></div>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">攻击</span>
+                <span class="stat-value atk" id="atkValue">10</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">防御</span>
+                <span class="stat-value def" id="defValue">5</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">身法</span>
+                <span class="stat-value" id="agiValue">5</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">银两</span>
+                <span class="stat-value gold" id="goldValue">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">江湖阅历</span>
+                <span class="stat-value" id="ageValue">0</span>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="rename()">改名</button>
+                <button class="btn btn-danger" onclick="resetGame()">重置</button>
+            </div>
+        </div>
+
+        <!-- 中间：日志区域 -->
+        <div class="card log-card">
+            <div class="card-title">
+                <span>◈</span> 江湖日志
+                <span style="margin-left:auto; font-size:12px; color:#999; font-weight:400;">共 <span id="logCount">0</span> 条</span>
+            </div>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+
+        <!-- 右侧：武学背包 -->
+        <div class="card">
+            <div class="card-title">
+                <span>◈</span> 武学背包
+                <span style="margin-left:auto; font-size:12px; color:#999; font-weight:400;">共 <span id="skillCount">0</span> 门</span>
+            </div>
+            <div class="skill-list" id="skillList"></div>
+        </div>
+
+        <!-- 底部状态栏 -->
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="status-item">当前状态：<span id="statusText">修炼中</span></div>
+                <div class="status-item">挂机时长：<span id="playTime">0</span></div>
+                <div class="status-item">下次事件：<span id="nextEvent">计算中...</span></div>
+            </div>
+            <div id="offlineBox"></div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ==================== 游戏配置 ====================
+        const REALMS = [
+            { name: '凡人', expNeed: 100, hpBonus: 0, mpBonus: 0, atkBonus: 0, defBonus: 0, agiBonus: 0 },
+            { name: '三流高手', expNeed: 300, hpBonus: 50, mpBonus: 30, atkBonus: 5, defBonus: 3, agiBonus: 3 },
+            { name: '二流高手', expNeed: 800, hpBonus: 100, mpBonus: 60, atkBonus: 10, defBonus: 6, agiBonus: 6 },
+            { name: '一流高手', expNeed: 2000, hpBonus: 200, mpBonus: 120, atkBonus: 20, defBonus: 12, agiBonus: 12 },
+            { name: '宗师', expNeed: 5000, hpBonus: 400, mpBonus: 250, atkBonus: 40, defBonus: 25, agiBonus: 25 },
+            { name: '大宗师', expNeed: 12000, hpBonus: 800, mpBonus: 500, atkBonus: 80, defBonus: 50, agiBonus: 50 },
+            { name: '先天境界', expNeed: 30000, hpBonus: 1500, mpBonus: 1000, atkBonus: 150, defBonus: 100, agiBonus: 100 },
+            { name: '天人合一', expNeed: 999999, hpBonus: 3000, mpBonus: 2000, atkBonus: 300, defBonus: 200, agiBonus: 200 }
+        ];
+
+        const SKILLS = {
+            white: [
+                { name: '太祖长拳', desc: '少林入门拳法，刚猛朴实', hp: 5, mp: 0, atk: 3, def: 2, agi: 1 },
+                { name: '基础剑法', desc: '华山派入门剑术', hp: 0, mp: 5, atk: 4, def: 1, agi: 2 },
+                { name: '庄稼把式', desc: '庄稼汉打架的招式，意外地实用', hp: 10, mp: 0, atk: 2, def: 3, agi: 0 },
+                { name: '五虎断门刀', desc: '江湖上常见的刀法', hp: 0, mp: 0, atk: 5, def: 1, agi: 1 },
+                { name: '草上飞', desc: '轻功入门，速度微增', hp: 0, mp: 3, atk: 0, def: 0, agi: 5 },
+                { name: '铁砂掌', desc: '手掌如铁，掌力惊人', hp: 8, mp: 0, atk: 4, def: 0, agi: 0 },
+                { name: '六合枪', desc: '枪法基础，攻守兼备', hp: 5, mp: 0, atk: 3, def: 3, agi: 1 },
+                { name: '伏虎棍', desc: '棍法入门，力大势沉', hp: 10, mp: 0, atk: 4, def: 2, agi: 0 }
+            ],
+            blue: [
+                { name: '八卦掌', desc: '游身八卦，掌法玄妙', hp: 20, mp: 15, atk: 8, def: 6, agi: 8 },
+                { name: '鸳鸯腿', desc: '腿法凌厉，连环不绝', hp: 10, mp: 10, atk: 10, def: 3, agi: 10 },
+                { name: '华山剑法', desc: '华山派嫡传剑法，剑气纵横', hp: 15, mp: 20, atk: 12, def: 4, agi: 6 },
+                { name: '铁布衫', desc: '横练功夫，刀枪不入', hp: 40, mp: 10, atk: 2, def: 15, agi: 0 },
+                { name: '金雁功', desc: '全真教轻功，身轻如燕', hp: 10, mp: 30, atk: 3, def: 3, agi: 15 },
+                { name: '摧心掌', desc: '青城派秘传，掌力直透脏腑', hp: 15, mp: 15, atk: 15, def: 3, agi: 4 },
+                { name: '回风拂柳剑', desc: '峨眉剑法，柔中带刚', hp: 10, mp: 20, atk: 10, def: 8, agi: 8 },
+                { name: '寒冰真气', desc: '玄冥寒毒，阴寒刺骨', hp: 20, mp: 40, atk: 15, def: 5, agi: 3 }
+            ],
+            purple: [
+                { name: '降龙十八掌·残篇', desc: '丐帮绝学，刚猛无俦', hp: 50, mp: 50, atk: 40, def: 15, agi: 10 },
+                { name: '六脉神剑·残篇', desc: '大理段氏绝学，剑气无形', hp: 30, mp: 80, atk: 50, def: 5, agi: 15 },
+                { name: '九阴白骨爪', desc: '九阴真经所载，阴毒狠辣', hp: 40, mp: 40, atk: 45, def: 10, agi: 20 },
+                { name: '独孤九剑·残篇', desc: '独孤求败所创，破尽天下武学', hp: 20, mp: 40, atk: 55, def: 20, agi: 25 },
+                { name: '乾坤大挪移', desc: '明教镇教之宝，借力打力', hp: 60, mp: 60, atk: 25, def: 40, agi: 15 },
+                { name: '北冥神功', desc: '逍遥派绝学，吸人内力', hp: 40, mp: 100, atk: 30, def: 20, agi: 15 },
+                { name: '小无相功', desc: '逍遥派心法，无形无相', hp: 50, mp: 80, atk: 35, def: 25, agi: 20 },
+                { name: '黯然销魂掌', desc: '杨过所创，黯然神伤', hp: 60, mp: 50, atk: 45, def: 15, agi: 20 }
+            ],
+            gold: [
+                { name: '九阴真经', desc: '黄裳所著，武林至尊宝典', hp: 200, mp: 200, atk: 100, def: 80, agi: 60 },
+                { name: '九阳神功', desc: '达摩祖师所留，至刚至阳', hp: 300, mp: 150, atk: 80, def: 100, agi: 50 },
+                { name: '易筋经', desc: '少林镇寺之宝，洗髓伐骨', hp: 250, mp: 250, atk: 60, def: 120, agi: 70 },
+                { name: '太玄经', desc: '侠客岛神秘武学，妙参造化', hp: 200, mp: 300, atk: 120, def: 60, agi: 100 },
+                { name: '独孤九剑', desc: '完整版，天下无敌', hp: 150, mp: 200, atk: 150, def: 80, agi: 120 },
+                { name: '六脉神剑', desc: '完整版，六脉齐发，剑气冲霄', hp: 150, mp: 300, atk: 180, def: 50, agi: 100 },
+                { name: '葵花宝典', desc: '前朝宦官所创，诡异莫测', hp: 200, mp: 250, atk: 200, def: 40, agi: 200 },
+                { name: '如来神掌', desc: '佛门至高武学，掌力通神', hp: 400, mp: 200, atk: 200, def: 150, agi: 50 }
+            ]
+        };
+
+        const EVENTS = {
+            qi: [ // 奇遇
+                { title: '跌落悬崖', desc: '你失足跌落悬崖，命不该绝，摔入一潭碧水。', 
+                  success: '潭底竟有一具白骨，手中握着一本秘籍！', 
+                  fail: '虽然保住性命，但摔得七荤八素，修为受损。',
+                  successRate: 0.7, rewardType: 'skill', rewardValue: 1 },
+                { title: '路遇高人', desc: '山间小路，一位白发老者拦住了你的去路。',
+                  success: '老者见你有缘，传了你三招两式，受益匪浅。',
+                  fail: '老者摇摇头离去，只留下一句"资质平平"。',
+                  successRate: 0.6, rewardType: 'exp', rewardValue: 2 },
+                { title: '山洞探险', desc: '你追踪一只白猿，发现了一个隐蔽的山洞。',
+                  success: '洞内珠光宝气，还有前人遗留的武学典籍！',
+                  fail: '洞内空无一物，只有几只蝙蝠，你扫兴而归。',
+                  successRate: 0.5, rewardType: 'mixed', rewardValue: 1.5 },
+                { title: '醉酒误入', desc: '你醉酒后误入一片竹林，迷失了方向。',
+                  success: '竹林深处竟有一座茅庐，主人是一位隐世高人。',
+                  fail: '你在竹林里转了一整夜，又累又饿。',
+                  successRate: 0.65, rewardType: 'skill', rewardValue: 0.8 },
+                { title: '救下神秘老人', desc: '你救下了一位被山贼围攻的神秘老人。',
+                  success: '老人感激不尽，将毕生所学倾囊相授。',
+                  fail: '老人伤势过重，只留下一些银两作为谢礼。',
+                  successRate: 0.8, rewardType: 'mixed', rewardValue: 2 },
+                { title: '古墓寻宝', desc: '你听说附近有一座古墓，内有奇珍异宝。',
+                  success: '你在墓中发现了一卷泛黄的武学残篇！',
+                  fail: '古墓机关重重，你险些丧命，空手而归。',
+                  successRate: 0.45, rewardType: 'skill', rewardValue: 1.2 },
+                { title: '观海悟道', desc: '你在海边静坐，涛声阵阵，心境空明。',
+                  success: '突有所悟，内力运转如海潮澎湃，修为大涨！',
+                  fail: '静坐半日，除了被蚊子叮了一身包，一无所获。',
+                  successRate: 0.75, rewardType: 'exp', rewardValue: 1.5 },
+                { title: '击败神秘剑客', desc: '一位蒙面剑客向你挑战，招招致命。',
+                  success: '你险胜半招，剑客留下剑谱大笑离去。',
+                  fail: '你败下阵来，剑客摇头说"十年后我再来"。',
+                  successRate: 0.55, rewardType: 'skill', rewardValue: 1 }
+            ],
+            crisis: [ // 危机
+                { title: '仇家追杀', desc: '你的仇家带着人马找上门来！',
+                  success: '你以少敌多，浴血奋战，竟杀出重围！',
+                  fail: '你双拳难敌四手，被打落山崖，身受重伤。',
+                  successRate: 0.4, rewardType: 'exp', rewardValue: 3 },
+                { title: '走火入魔', desc: '修炼时气息逆行，走火入魔！',
+                  success: '你强行逆转经脉，竟因祸得福，功力大增！',
+                  fail: '你内力大损，经脉受损，需静养数月。',
+                  successRate: 0.35, rewardType: 'mixed', rewardValue: 2.5 },
+                { title: '中了奇毒', desc: '你在客栈吃饭时中了别人的暗算。',
+                  success: '你以毒攻毒，不仅解了毒，还练成了毒功！',
+                  fail: '毒性发作，你花了大量银两才买到解药。',
+                  successRate: 0.45, rewardType: 'skill', rewardValue: 0.8 },
+                { title: '被山贼打劫', desc: '一伙山贼拦住了你的去路。',
+                  success: '你大展神威，山贼头目跪地求饶，献上宝物。',
+                  fail: '你寡不敌众，被打晕后洗劫一空。',
+                  successRate: 0.5, rewardType: 'gold', rewardValue: 1.5 },
+                { title: '误入禁地', desc: '你误入了一处武林禁地，阵法森严。',
+                  success: '你九死一生闯出阵法，竟来到了一处秘境。',
+                  fail: '被困在阵中三日三夜，出来时狼狈不堪。',
+                  successRate: 0.3, rewardType: 'mixed', rewardValue: 3 },
+                { title: '比武招亲', desc: '你被卷入了一场比武招亲，不得不战。',
+                  success: '你力挫群雄，赢得了芳心，还获得了岳家武学。',
+                  fail: '你被一位高手打下擂台，成了江湖笑柄。',
+                  successRate: 0.5, rewardType: 'skill', rewardValue: 1 }
+            ],
+            daily: [ // 日常
+                { title: '打坐修炼', desc: '你寻了一处清静之地，打坐修炼。',
+                  success: '气息通畅，周天运转，修为精进。',
+                  fail: '心神不宁，难以入定，收效甚微。',
+                  successRate: 0.9, rewardType: 'exp', rewardValue: 0.5 },
+                { title: '行侠仗义', desc: '你路见不平，拔刀相助。',
+                  success: '为民除害，百姓感恩，赠你银两。',
+                  fail: '对方后台强硬，你惹上了麻烦。',
+                  successRate: 0.85, rewardType: 'gold', rewardValue: 0.8 },
+                { title: '比武切磋', desc: '你与一位同道中人切磋武艺。',
+                  success: '胜负之间，你领悟了新的招式。',
+                  fail: '输了一招，但你总结了教训。',
+                  successRate: 0.8, rewardType: 'exp', rewardValue: 0.7 },
+                { title: '采药炼丹', desc: '你上山采药，准备炼制丹药。',
+                  success: '采得珍稀药材，炼成丹药，服用后气血大增。',
+                  fail: '药材被野兽糟蹋，你只能空手而归。',
+                  successRate: 0.75, rewardType: 'hp', rewardValue: 1 },
+                { title: '闭关领悟', desc: '你闭关三日，苦思武学难题。',
+                  success: '灵光一闪，困扰多年的瓶颈迎刃而解。',
+                  fail: '苦思无果，反而更加困惑。',
+                  successRate: 0.7, rewardType: 'exp', rewardValue: 1 },
+                { title: '江湖游历', desc: '你游历四方，增长见识。',
+                  success: '见识了各门各派的武功，受益匪浅。',
+                  fail: '一路颠簸，风餐露宿，疲惫不堪。',
+                  successRate: 0.85, rewardType: 'exp', rewardValue: 0.6 },
+                { title: '传授武艺', desc: '一位少年慕名而来，请你指点。',
+                  success: '教学相长，你也在传授中有了新的领悟。',
+                  fail: '少年资质太差，你教得心力交瘁。',
+                  successRate: 0.8, rewardType: 'exp', rewardValue: 0.5 },
+                { title: '夜观星象', desc: '你仰望星空，感悟天地之道。',
+                  success: '星象暗藏玄机，你对内功心法有了新的理解。',
+                  fail: '看了一晚上星星，脖子酸了，什么也没悟到。',
+                  successRate: 0.75, rewardType: 'mp', rewardValue: 1 }
+            ]
+        };
+
+        // ==================== 游戏状态 ====================
+        let player = {
+            name: '无名侠客',
+            realm: 0,
+            exp: 0,
+            hp: 100, maxHp: 100,
+            mp: 50, maxMp: 50,
+            atk: 10, def: 5, agi: 5,
+            gold: 0,
+            skills: [],
+            logs: [],
+            totalPlayTime: 0,
+            lastSave: Date.now(),
+            nextEventTime: 0,
+            eventCount: 0
+        };
+
+        let gameTimer = null;
+        let eventTimer = null;
+        let playTimeTimer = null;
+        let startTime = Date.now();
+
+        // ==================== 初始化与存档 ====================
+        function loadGame() {
+            const saved = localStorage.getItem('jianghu_idle_save');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    const now = Date.now();
+                    const offlineTime = Math.floor((now - data.lastSave) / 1000);
+                    
+                    player = data;
+                    
+                    // 计算离线收益
+                    if (offlineTime > 10) {
+                        processOfflineEvents(offlineTime);
+                    }
+                    
+                    updateUI();
+                    renderSkills();
+                    renderLogs();
+                    
+                    showToast(`欢迎回来，${player.name}！离线 ${formatTime(offlineTime)}`, 'toast-success');
+                } catch (e) {
+                    console.error('存档加载失败:', e);
+                    initNewGame();
+                }
+            } else {
+                initNewGame();
+            }
+        }
+
+        function initNewGame() {
+            player = {
+                name: '无名侠客',
+                realm: 0,
+                exp: 0,
+                hp: 100, maxHp: 100,
+                mp: 50, maxMp: 50,
+                atk: 10, def: 5, agi: 5,
+                gold: 0,
+                skills: [],
+                logs: [],
+                totalPlayTime: 0,
+                lastSave: Date.now(),
+                nextEventTime: Date.now() + randomRange(5000, 15000),
+                eventCount: 0
+            };
+            saveGame();
+            updateUI();
+            addLog('system', '江湖路远', '你踏入江湖，开始了你的修炼之路。前路漫漫，祝你好运。', []);
+        }
+
+        function saveGame() {
+            player.lastSave = Date.now();
+            localStorage.setItem('jianghu_idle_save', JSON.stringify(player));
+        }
+
+        function resetGame() {
+            if (!confirm('确定要重置所有进度吗？此操作不可恢复！')) return;
+            localStorage.removeItem('jianghu_idle_save');
+            location.reload();
+        }
+
+        function rename() {
+            const name = prompt('请输入你的江湖名号:', player.name);
+            if (name && name.trim()) {
+                player.name = name.trim().substring(0, 10);
+                updateUI();
+                saveGame();
+                showToast(`从此江湖人称：${player.name}`, 'toast-blue');
+            }
+        }
+
+        // ==================== 离线事件处理 ====================
+        function processOfflineEvents(offlineSeconds) {
+            // 离线时每5-15秒生成一个事件
+            let elapsed = 0;
+            let offlineLogs = [];
+            
+            while (elapsed < offlineSeconds) {
+                const interval = randomRange(5, 15);
+                elapsed += interval;
+                if (elapsed > offlineSeconds) break;
+                
+                const eventType = pickRandom(['qi', 'crisis', 'daily']);
+                const eventPool = EVENTS[eventType];
+                const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+                const success = Math.random() < event.successRate;
+                
+                const rewards = calculateReward(event, success, true);
+                applyRewards(rewards);
+                
+                offlineLogs.push({
+                    type: eventType,
+                    title: event.title,
+                    desc: event.desc,
+                    result: success ? event.success : event.fail,
+                    success: success,
+                    rewards: rewards,
+                    time: new Date(player.lastSave + elapsed * 1000)
+                });
+                
+                // 自动恢复气血内力
+                player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.05));
+                player.mp = Math.min(player.maxMp, player.mp + Math.floor(player.maxMp * 0.05));
+                
+                player.eventCount++;
+            }
+            
+            player.totalPlayTime += offlineSeconds;
+            
+            // 只保留最近20条离线日志，加入主日志
+            if (offlineLogs.length > 0) {
+                const summaryLog = {
+                    type: 'offline',
+                    title: '离线挂机',
+                    desc: `你离线期间发生了 ${offlineLogs.length} 件事。`,
+                    result: '',
+                    success: true,
+                    rewards: [],
+                    time: new Date(),
+                    offlineDetails: offlineLogs.slice(-20)
+                };
+                player.logs.unshift(summaryLog);
+                trimLogs();
+                
+                // 显示离线信息
+                const offlineBox = document.getElementById('offlineBox');
+                offlineBox.innerHTML = `<div class="offline-info">离线期间：${offlineLogs.length} 个事件</div>`;
+                setTimeout(() => { offlineBox.innerHTML = ''; }, 5000);
+            }
+            
+            checkRealmBreakthrough();
+        }
+
+        // ==================== 实时事件系统 ====================
+        function scheduleNextEvent() {
+            const delay = randomRange(5000, 15000); // 5-15秒
+            player.nextEventTime = Date.now() + delay;
+            
+            if (eventTimer) clearTimeout(eventTimer);
+            eventTimer = setTimeout(() => {
+                triggerEvent();
+                scheduleNextEvent();
+            }, delay);
+        }
+
+        function triggerEvent() {
+            const eventType = pickRandom(['qi', 'crisis', 'daily']);
+            const eventPool = EVENTS[eventType];
+            const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+            const success = Math.random() < event.successRate;
+            
+            const rewards = calculateReward(event, success, false);
+            applyRewards(rewards);
+            
+            // 自动恢复
+            player.hp = Math.min(player.maxHp, player.hp + Math.floor(player.maxHp * 0.02));
+            player.mp = Math.min(player.maxMp, player.mp + Math.floor(player.maxMp * 0.02));
+            
+            addLog(eventType, event.title, event.desc, [
+                { text: success ? event.success : event.fail, type: success ? 'result-success' : 'result-fail' }
+            ], rewards, success);
+            
+            player.eventCount++;
+            checkRealmBreakthrough();
+            updateUI();
+            saveGame();
+            
+            //  toast 通知
+            if (eventType === 'qi' && success) {
+                showToast(`奇遇！${event.title}`, 'toast-purple');
+            } else if (eventType === 'crisis') {
+                showToast(`危机！${event.title}`, success ? 'toast-success' : 'toast-danger');
+            } else if (success && rewards.some(r => r.type === 'skill' && r.tier === 'gold')) {
+                showToast('绝世武学！', 'toast-gold');
+            }
+        }
+
+        function calculateReward(event, success, isOffline) {
+            const rewards = [];
+            const multiplier = isOffline ? 0.5 : 1; // 离线收益减半
+            const realmMult = 1 + player.realm * 0.2;
+            
+            if (!success) {
+                // 失败惩罚
+                if (event.rewardType === 'exp') {
+                    rewards.push({ type: 'exp', value: -Math.floor(10 * event.rewardValue * realmMult), text: '修为 -' });
+                }
+                if (Math.random() < 0.5) {
+                    rewards.push({ type: 'hp', value: -Math.floor(20 * realmMult), text: '气血 -' });
+                }
+                return rewards;
+            }
+            
+            switch (event.rewardType) {
+                case 'exp':
+                    rewards.push({ type: 'exp', value: Math.floor(20 * event.rewardValue * realmMult * multiplier), text: '修为 +' });
+                    break;
+                case 'gold':
+                    rewards.push({ type: 'gold', value: Math.floor(50 * event.rewardValue * realmMult * multiplier), text: '银两 +' });
+                    break;
+                case 'hp':
+                    rewards.push({ type: 'hp', value: Math.floor(30 * event.rewardValue * realmMult * multiplier), text: '气血 +' });
+                    break;
+                case 'mp':
+                    rewards.push({ type: 'mp', value: Math.floor(30 * event.rewardValue * realmMult * multiplier), text: '内力 +' });
+                    break;
+                case 'skill': {
+                    const skill = generateSkill(event.rewardValue);
+                    if (skill) rewards.push({ type: 'skill', tier: skill.tier, name: skill.data.name, skill: skill.data, text: '获得武学' });
+                    break;
+                }
+                case 'mixed': {
+                    const roll = Math.random();
+                    if (roll < 0.3) {
+                        const skill = generateSkill(event.rewardValue * 0.8);
+                        if (skill) rewards.push({ type: 'skill', tier: skill.tier, name: skill.data.name, skill: skill.data, text: '获得武学' });
+                    } else if (roll < 0.6) {
+                        rewards.push({ type: 'exp', value: Math.floor(30 * event.rewardValue * realmMult * multiplier), text: '修为 +' });
+                    } else if (roll < 0.8) {
+                        rewards.push({ type: 'gold', value: Math.floor(80 * event.rewardValue * realmMult * multiplier), text: '银两 +' });
+                    } else {
+                        rewards.push({ type: 'hp', value: Math.floor(20 * event.rewardValue * realmMult * multiplier), text: '气血 +' });
+                        rewards.push({ type: 'mp', value: Math.floor(20 * event.rewardValue * realmMult * multiplier), text: '内力 +' });
+                    }
+                    break;
+                }
+            }
+            
+            return rewards;
+        }
+
+        function generateSkill(luckFactor) {
+            const roll = Math.random() * luckFactor;
+            let tier, pool;
+            
+            if (roll > 0.98) {
+                tier = 'gold';
+                pool = SKILLS.gold;
+            } else if (roll > 0.85) {
+                tier = 'purple';
+                pool = SKILLS.purple;
+            } else if (roll > 0.55) {
+                tier = 'blue';
+                pool = SKILLS.blue;
+            } else {
+                tier = 'white';
+                pool = SKILLS.white;
+            }
+            
+            const skill = pool[Math.floor(Math.random() * pool.length)];
+            return { tier, data: skill };
+        }
+
+        function applyRewards(rewards) {
+            for (const r of rewards) {
+                switch (r.type) {
+                    case 'exp': player.exp = Math.max(0, player.exp + r.value); break;
+                    case 'gold': player.gold = Math.max(0, player.gold + r.value); break;
+                    case 'hp': player.hp = Math.max(1, Math.min(player.maxHp, player.hp + r.value)); break;
+                    case 'mp': player.mp = Math.max(0, Math.min(player.maxMp, player.mp + r.value)); break;
+                    case 'skill':
+                        if (!player.skills.find(s => s.name === r.name)) {
+                            player.skills.push({ ...r.skill, tier: r.tier });
+                            recalcStats();
+                        }
+                        break;
+                }
+            }
+        }
+
+        function recalcStats() {
+            const realm = REALMS[player.realm];
+            let baseHp = 100 + realm.hpBonus;
+            let baseMp = 50 + realm.mpBonus;
+            let baseAtk = 10 + realm.atkBonus;
+            let baseDef = 5 + realm.defBonus;
+            let baseAgi = 5 + realm.agiBonus;
+            
+            for (const skill of player.skills) {
+                baseHp += skill.hp || 0;
+                baseMp += skill.mp || 0;
+                baseAtk += skill.atk || 0;
+                baseDef += skill.def || 0;
+                baseAgi += skill.agi || 0;
+            }
+            
+            player.maxHp = baseHp;
+            player.maxMp = baseMp;
+            player.atk = baseAtk;
+            player.def = baseDef;
+            player.agi = baseAgi;
+            
+            player.hp = Math.min(player.hp, player.maxHp);
+            player.mp = Math.min(player.mp, player.maxMp);
+        }
+
+        function checkRealmBreakthrough() {
+            let currentRealm = player.realm;
+            while (currentRealm < REALMS.length - 1 && player.exp >= REALMS[currentRealm].expNeed) {
+                player.exp -= REALMS[currentRealm].expNeed;
+                currentRealm++;
+                
+                addLog('system', '境界突破', `你运转真气，冲破了瓶颈！`, [
+                    { text: `突破至「${REALMS[currentRealm].name}」！全身气息暴涨，实力大增。`, type: 'result-success' }
+                ], [], true);
+                
+                showToast(`境界突破！${REALMS[currentRealm].name}`, 'toast-gold');
+            }
+            player.realm = currentRealm;
+            recalcStats();
+        }
+
+        // ==================== UI 渲染 ====================
+        function updateUI() {
+            document.getElementById('charName').textContent = player.name;
+            
+            const realmBadge = document.getElementById('realmBadge');
+            realmBadge.textContent = REALMS[player.realm].name;
+            realmBadge.className = 'realm-badge realm-' + (player.realm + 1);
+            
+            const realm = REALMS[player.realm];
+            const expPercent = Math.min(100, Math.floor((player.exp / realm.expNeed) * 100));
+            document.getElementById('expValue').textContent = `${player.exp} / ${realm.expNeed}`;
+            document.getElementById('expBar').style.width = expPercent + '%';
+            document.getElementById('expText').textContent = expPercent + '%';
+            
+            document.getElementById('hpValue').textContent = `${player.hp} / ${player.maxHp}`;
+            document.getElementById('hpBar').style.width = (player.hp / player.maxHp * 100) + '%';
+            
+            document.getElementById('mpValue').textContent = `${player.mp} / ${player.maxMp}`;
+            document.getElementById('mpBar').style.width = (player.mp / player.maxMp * 100) + '%';
+            
+            document.getElementById('atkValue').textContent = player.atk;
+            document.getElementById('defValue').textContent = player.def;
+            document.getElementById('agiValue').textContent = player.agi;
+            document.getElementById('goldValue').textContent = player.gold;
+            document.getElementById('ageValue').textContent = player.eventCount;
+            
+            document.getElementById('logCount').textContent = player.logs.length;
+            document.getElementById('skillCount').textContent = player.skills.length;
+            
+            const remaining = Math.max(0, player.nextEventTime - Date.now());
+            document.getElementById('nextEvent').textContent = (remaining / 1000).toFixed(1) + 's';
+        }
+
+        function renderSkills() {
+            const list = document.getElementById('skillList');
+            list.innerHTML = '';
+            
+            if (player.skills.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">尚未获得任何武学</div>';
+                return;
+            }
+            
+            for (const skill of player.skills) {
+                const item = document.createElement('div');
+                item.className = 'skill-item';
+                
+                const tierName = { white: '凡', blue: '奇', purple: '绝', gold: '神' };
+                const tierClass = { white: 'tag-white', blue: 'tag-blue', purple: 'tag-purple', gold: 'tag-gold' };
+                
+                const bonuses = [];
+                if (skill.hp) bonuses.push(`气血+${skill.hp}`);
+                if (skill.mp) bonuses.push(`内力+${skill.mp}`);
+                if (skill.atk) bonuses.push(`攻击+${skill.atk}`);
+                if (skill.def) bonuses.push(`防御+${skill.def}`);
+                if (skill.agi) bonuses.push(`身法+${skill.agi}`);
+                
+                item.innerHTML = `
+                    <div class="skill-name ${skill.tier}">
+                        <span class="tag ${tierClass[skill.tier]}">${tierName[skill.tier]}</span>
+                        ${skill.name}
+                    </div>
+                    <div class="skill-desc">${skill.desc}</div>
+                    <div class="skill-bonus">${bonuses.join(' · ')}</div>
+                `;
+                list.appendChild(item);
+            }
+        }
+
+        function addLog(type, title, desc, results, rewards, success) {
+            const log = {
+                type, title, desc, results, rewards, success,
+                time: new Date()
+            };
+            player.logs.unshift(log);
+            trimLogs();
+            renderLogEntry(log, true);
+        }
+
+        function trimLogs() {
+            if (player.logs.length > 100) {
+                player.logs = player.logs.slice(0, 100);
+            }
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
+            for (const log of player.logs) {
+                renderLogEntry(log, false);
+            }
+        }
+
+        function renderLogEntry(log, animate) {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${log.type}` + (animate ? '' : '');
+            
+            const typeNames = { qi: '奇遇', crisis: '危机', daily: '日常', system: '系统', offline: '离线' };
+            const typeTags = { qi: 'tag-qi', crisis: 'tag-crisis', daily: 'tag-daily', system: 'tag-success', offline: 'tag-blue' };
+            
+            let html = `<div class="log-time">${formatTimeStr(log.time)}</div>`;
+            html += `<div class="log-title"><span class="tag ${typeTags[log.type] || 'tag-daily'}">${typeNames[log.type] || log.type}</span>${log.title}</div>`;
+            html += `<div class="log-desc">${log.desc}</div>`;
+            
+            if (log.results && log.results.length > 0) {
+                for (const r of log.results) {
+                    html += `<div class="log-desc" style="color:${r.type === 'result-success' ? 'var(--jade)' : 'var(--red)'}; font-weight:700; margin-top:4px;">${r.text}</div>`;
+                }
+            }
+            
+            if (log.rewards && log.rewards.length > 0) {
+                html += '<div class="reward-line">';
+                for (const r of log.rewards) {
+                    const positive = r.value > 0 || r.type === 'skill';
+                    html += `<span class="reward-item ${positive ? 'positive' : 'negative'}">`;
+                    if (r.type === 'skill') {
+                        const tierColor = { white: '#666', blue: '#2c4a6e', purple: '#6b3a7d', gold: '#b8860b' };
+                        html += `${r.text}：<span style="color:${tierColor[r.tier]}">${r.name}</span>`;
+                    } else {
+                        html += `${r.text}${Math.abs(r.value)}`;
+                    }
+                    html += '</span>';
+                }
+                html += '</div>';
+            }
+            
+            // 离线详情折叠
+            if (log.offlineDetails && log.offlineDetails.length > 0) {
+                html += '<div style="margin-top:8px; padding:8px; background:rgba(0,0,0,0.05); border-radius:4px; font-size:12px;">';
+                for (const d of log.offlineDetails.slice(-5)) {
+                    html += `<div style="margin-bottom:4px;"><span style="color:${d.success ? 'var(--jade)' : 'var(--red)'}">${d.success ? '✓' : '✗'}</span> ${d.title} - ${d.result.substring(0, 30)}${d.result.length > 30 ? '...' : ''}</div>`;
+                }
+                if (log.offlineDetails.length > 5) {
+                    html += `<div style="color:#999;">...还有 ${log.offlineDetails.length - 5} 条</div>`;
+                }
+                html += '</div>';
+            }
+            
+            entry.innerHTML = html;
+            container.insertBefore(entry, container.firstChild);
+            
+            // 保持滚动在顶部
+            container.scrollTop = 0;
+            
+            // 限制DOM数量
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        // ==================== 工具函数 ====================
+        function randomRange(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function pickRandom(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function formatTime(seconds) {
+            if (seconds < 60) return `${seconds}秒`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}分${seconds % 60}秒`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时${Math.floor((seconds % 3600) / 60)}分`;
+            return `${Math.floor(seconds / 86400)}天${Math.floor((seconds % 86400) / 3600)}小时`;
+        }
+
+        function formatTimeStr(date) {
+            const d = new Date(date);
+            return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+        }
+
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== 定时器 ====================
+        function startGameLoop() {
+            // 实时更新UI
+            gameTimer = setInterval(() => {
+                updateUI();
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('playTime').textContent = formatTime(player.totalPlayTime + elapsed);
+            }, 500);
+            
+            // 自动存档
+            setInterval(() => {
+                player.totalPlayTime += Math.floor((Date.now() - startTime) / 1000);
+                startTime = Date.now();
+                saveGame();
+            }, 10000);
+            
+            // 事件调度
+            scheduleNextEvent();
+        }
+
+        // 页面关闭前保存
+        window.addEventListener('beforeunload', () => {
+            player.totalPlayTime += Math.floor((Date.now() - startTime) / 1000);
+            saveGame();
+        });
+
+        // ==================== 启动 ====================
+        loadGame();
+        startGameLoop();
+    </script>
+</body>
+</html>
