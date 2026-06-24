@@ -480,9 +480,342 @@
         .toast-blue { background: linear-gradient(135deg, var(--blue), #4a6fa5); }
         .toast-success { background: linear-gradient(135deg, var(--jade), var(--jade-light)); }
         .toast-danger { background: linear-gradient(135deg, var(--red), var(--red-light)); }
+
+        /* ==================== 桌面宠物模式 ==================== */
+        .mode-toggle {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 1001;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: #1a1a2e;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(184, 134, 11, 0.4);
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .mode-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(184, 134, 11, 0.6);
+        }
+
+        .game-wrapper {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .game-wrapper.pet-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+            height: 0;
+            overflow: hidden;
+        }
+
+        .pet-mode {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 220px;
+            z-index: 999;
+            animation: petAppear 0.5s ease;
+        }
+
+        .pet-mode.active {
+            display: block;
+        }
+
+        @keyframes petAppear {
+            from { opacity: 0; transform: translateY(20px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .pet-card {
+            background: linear-gradient(180deg, #2a2520 0%, #1a1815 100%);
+            border: 2px solid var(--gold);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(184, 134, 11, 0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pet-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+        }
+
+        /* 打坐小人 */
+        .pet-character {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 12px;
+        }
+
+        .cultivator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+        }
+
+        .cultivator .head {
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle at 40% 40%, #f5d0a9, #d4a574);
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+
+        .cultivator .head::before,
+        .cultivator .head::after {
+            content: '';
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            top: 9px;
+            animation: blink 4s ease-in-out infinite;
+        }
+
+        .cultivator .head::before { left: 6px; }
+        .cultivator .head::after { right: 6px; }
+
+        @keyframes blink {
+            0%, 96%, 100% { transform: scaleY(1); }
+            98% { transform: scaleY(0.1); }
+        }
+
+        .cultivator .body {
+            width: 36px;
+            height: 28px;
+            background: linear-gradient(180deg, #5a3a2a, #3a2518);
+            border-radius: 10px 10px 4px 4px;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        .cultivator .legs {
+            width: 44px;
+            height: 14px;
+            background: linear-gradient(180deg, #4a2a18, #2a1508);
+            border-radius: 0 0 20px 20px;
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        .cultivator .arms {
+            width: 40px;
+            height: 8px;
+            background: linear-gradient(90deg, #5a3a2a, #3a2518);
+            border-radius: 4px;
+            position: absolute;
+            top: 26px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+
+        .cultivator .arms::before,
+        .cultivator .arms::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f5d0a9;
+            border-radius: 50%;
+            top: -1px;
+        }
+
+        .cultivator .arms::before { left: -2px; }
+        .cultivator .arms::after { right: -2px; }
+
+        /* 真气光晕 */
+        .aura {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            animation: auraPulse 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .aura::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            animation: auraPulse 2s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes auraPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.1; }
+        }
+
+        /* 事件气泡 */
+        .event-bubble {
+            position: absolute;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: var(--paper);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            padding: 10px 14px;
+            min-width: 160px;
+            max-width: 200px;
+            font-size: 13px;
+            line-height: 1.5;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s ease;
+            z-index: 10;
+        }
+
+        .event-bubble.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .event-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--gold);
+        }
+
+        .event-bubble .bubble-title {
+            font-weight: 700;
+            color: var(--red);
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .event-bubble .bubble-desc {
+            color: #555;
+            font-size: 12px;
+        }
+
+        .event-bubble .bubble-reward {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border);
+            font-size: 12px;
+            color: var(--jade);
+        }
+
+        /* 宠物状态条 */
+        .pet-stats {
+            margin-bottom: 10px;
+        }
+
+        .pet-realm {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold-light);
+            margin-bottom: 6px;
+            text-shadow: 0 0 8px rgba(184, 134, 11, 0.3);
+        }
+
+        .pet-mini-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .pet-mini-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .pet-mini-fill.exp { background: linear-gradient(90deg, var(--jade), var(--jade-light)); }
+        .pet-mini-fill.hp { background: linear-gradient(90deg, var(--red), var(--red-light)); }
+
+        .pet-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 8px;
+        }
+
+        .pet-status-text {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .pet-expand-btn {
+            margin-top: 10px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.6);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pet-expand-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold-light);
+        }
     </style>
 </head>
 <body>
+    <button class="mode-toggle" id="modeToggle" onclick="togglePetMode()">🧘 桌面宠物</button>
+
+    <div class="game-wrapper" id="gameWrapper">
     <div class="header-bar">
         <h1>江 湖 挂 机 录</h1>
     </div>
@@ -576,6 +909,41 @@
                 <div class="status-item">下次事件：<span id="nextEvent">计算中...</span></div>
             </div>
             <div id="offlineBox"></div>
+        </div>
+    </div>
+
+    <!-- 桌面宠物模式 -->
+    <div class="pet-mode" id="petMode">
+        <div class="pet-card">
+            <div class="pet-realm" id="petRealm">凡人</div>
+            <div class="pet-labels">
+                <span>修为</span>
+                <span id="petExpText">0 / 100</span>
+            </div>
+            <div class="pet-mini-bar">
+                <div class="pet-mini-fill exp" id="petExpBar" style="width: 0%"></div>
+            </div>
+            <div class="pet-labels">
+                <span>气血</span>
+                <span id="petHpText">100 / 100</span>
+            </div>
+            <div class="pet-mini-bar">
+                <div class="pet-mini-fill hp" id="petHpBar" style="width: 100%"></div>
+            </div>
+
+            <div class="pet-character">
+                <div class="cultivator">
+                    <div class="head"></div>
+                    <div class="body"></div>
+                    <div class="legs"></div>
+                    <div class="arms"></div>
+                </div>
+                <div class="aura"></div>
+                <div class="event-bubble" id="eventBubble"></div>
+            </div>
+
+            <div class="pet-status-text" id="petStatus">正在打坐修炼...</div>
+            <button class="pet-expand-btn" onclick="togglePetMode()">展开完整界面</button>
         </div>
     </div>
 
@@ -932,6 +1300,9 @@
             } else if (success && rewards.some(r => r.type === 'skill' && r.tier === 'gold')) {
                 showToast('绝世武学！', 'toast-gold');
             }
+
+            // 宠物气泡提示
+            showPetBubble(event.title, success ? event.success : event.fail, rewards, success);
         }
 
         function calculateReward(event, success, isOffline) {
@@ -1100,6 +1471,14 @@
             
             const remaining = Math.max(0, player.nextEventTime - Date.now());
             document.getElementById('nextEvent').textContent = (remaining / 1000).toFixed(1) + 's';
+
+            // 更新宠物模式状态
+            const petExpPercent = Math.min(100, Math.floor((player.exp / REALMS[player.realm].expNeed) * 100));
+            document.getElementById('petRealm').textContent = REALMS[player.realm].name;
+            document.getElementById('petExpText').textContent = `${player.exp} / ${REALMS[player.realm].expNeed}`;
+            document.getElementById('petExpBar').style.width = petExpPercent + '%';
+            document.getElementById('petHpText').textContent = `${player.hp} / ${player.maxHp}`;
+            document.getElementById('petHpBar').style.width = (player.hp / player.maxHp * 100) + '%';
         }
 
         function renderSkills() {
@@ -1247,6 +1626,71 @@
             toast.textContent = message;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== 桌面宠物模式 ====================
+        let petModeActive = false;
+
+        function togglePetMode() {
+            petModeActive = !petModeActive;
+            const wrapper = document.getElementById('gameWrapper');
+            const pet = document.getElementById('petMode');
+            const toggleBtn = document.getElementById('modeToggle');
+            
+            if (petModeActive) {
+                wrapper.classList.add('pet-hidden');
+                pet.classList.add('active');
+                toggleBtn.textContent = '🎮 完整界面';
+                document.body.style.background = '#1a1a1a';
+            } else {
+                wrapper.classList.remove('pet-hidden');
+                pet.classList.remove('active');
+                toggleBtn.textContent = '🧘 桌面宠物';
+                document.body.style.background = '#1a1a1a url("data:image/svg+xml,<svg xmlns=\\"http://www.w3.org/2000/svg\\" width=\\"100\\" height=\\"100\\" opacity=\\"0.03\\"><rect fill=\\"%23fff\\" width=\\"100\\" height=\\"100\\"/></svg>")';
+            }
+        }
+
+        function showPetBubble(title, desc, rewards, success) {
+            const bubble = document.getElementById('eventBubble');
+            const statusText = document.getElementById('petStatus');
+            if (!bubble) return;
+            
+            // 构建气泡内容
+            let html = `<div class="bubble-title">${success ? '✓' : '✗'} ${title}</div>`;
+            html += `<div class="bubble-desc">${desc}</div>`;
+            
+            if (rewards && rewards.length > 0) {
+                html += '<div class="bubble-reward">';
+                for (const r of rewards) {
+                    if (r.type === 'skill') {
+                        const tierColor = { white: '#666', blue: '#2c4a6e', purple: '#6b3a7d', gold: '#b8860b' };
+                        html += `<span style="color:${tierColor[r.tier]}">${r.name}</span> `;
+                    } else {
+                        const color = r.value > 0 ? 'var(--jade)' : 'var(--red)';
+                        html += `<span style="color:${color}">${r.text}${Math.abs(r.value)}</span> `;
+                    }
+                }
+                html += '</div>';
+            }
+            
+            bubble.innerHTML = html;
+            bubble.classList.add('show');
+            
+            // 更新状态文字
+            const statusLines = [
+                '正在打坐修炼...',
+                '气息流转，周天运转...',
+                '心如止水，渐入佳境...',
+                '真气充盈，经脉通畅...',
+                '感悟天地之道...',
+                '神游太虚，物我两忘...'
+            ];
+            statusText.textContent = statusLines[Math.floor(Math.random() * statusLines.length)];
+            
+            // 5秒后隐藏气泡
+            setTimeout(() => {
+                bubble.classList.remove('show');
+            }, 5000);
         }
 
         // ==================== 定时器 ====================
