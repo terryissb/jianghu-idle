@@ -34,13 +34,19 @@
     overflow: hidden;
   }
 
-  /* 极简打坐小人 */
+  /* 极简打坐小人 - 仅在 aura 区域拖动，其余区域可点击 */
   .cultivator-wrapper {
     position: relative;
     width: 120px;
     height: 120px;
-    cursor: grab;
+    cursor: default;
+  }
+
+  .drag-zone {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
     -webkit-app-region: drag;
+    z-index: 1;
   }
 
   .cultivator-wrapper:active { cursor: grabbing; }
@@ -247,9 +253,16 @@
     transition: opacity 0.5s ease;
   }
 
+  /* 交互层 - 确保可点击 */
+  .interaction-layer {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+  }
+
   .cultivator-wrapper:hover .state-label { opacity: 1; }
 
-  /* 事件气泡 */
+  /* 事件气泡 - 必须可点击 */
   .event-bubble {
     position: absolute;
     bottom: 125px;
@@ -264,7 +277,7 @@
     line-height: 1.6;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 15px rgba(184, 134, 11, 0.2);
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none; /* 隐藏时不可点击 */
     transition: all 0.4s ease;
     z-index: 100;
     max-height: 0;
@@ -273,9 +286,13 @@
 
   .event-bubble.show {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto; /* 显示时可点击 */
     transform: translateX(-50%) translateY(0);
     max-height: 400px;
+  }
+
+  .event-bubble * {
+    pointer-events: auto; /* 确保子元素可点击 */
   }
 
   .event-bubble::after {
@@ -470,9 +487,11 @@
 </div>
 
 <div class="cultivator-wrapper state-closed" id="cultivatorWrapper">
-  <div class="hidden-stats" id="hiddenStats"></div>
-  <div class="click-hint">🖱️ 悬停看属性，等待事件出现</div>
-  <div class="cultivator">
+  <div class="drag-zone"></div>
+  <div class="interaction-layer">
+    <div class="hidden-stats" id="hiddenStats"></div>
+    <div class="click-hint">🖱️ 悬停看属性，等待事件出现</div>
+    <div class="cultivator">
     <div class="head"></div>
     <div class="body"></div>
     <div class="legs"></div>
@@ -768,6 +787,7 @@ let startTime = Date.now();
 
 // ==================== 初始化 ====================
 function initGame() {
+  console.log('[renderer] initGame');
   // 随机分配灵根
   const rootKeys = Object.keys(SPIRITUAL_ROOTS);
   player.spiritualRoot = rootKeys[Math.floor(Math.random() * rootKeys.length)];
@@ -777,13 +797,17 @@ function initGame() {
   const elementNames = ['metal', 'wood', 'water', 'fire', 'earth'];
   player.elements[elementNames[bias]] = randomRange(5, 15);
   
+  console.log('[renderer] assigned spiritual root:', player.spiritualRoot);
+  
   updateUI();
   updateHiddenStats();
   scheduleNextEvent();
   startCultivationLoop();
+  console.log('[renderer] initGame complete');
 }
 
 function loadGame() {
+  console.log('[renderer] loadGame');
   const saved = localStorage.getItem('jianghu_xiuzhen_pet_save');
   if (saved) {
     try {
@@ -800,10 +824,13 @@ function loadGame() {
       updateUI();
       updateHiddenStats();
       showBubble('离线挂机', `你离线了 ${formatTime(offlineTime)}，修为自动增长。`, null, true);
+      console.log('[renderer] loadGame success');
     } catch (e) {
+      console.error('[renderer] loadGame failed:', e);
       initGame();
     }
   } else {
+    console.log('[renderer] no saved game, init new');
     initGame();
   }
 }
@@ -867,6 +894,7 @@ function scheduleNextEvent() {
   // 低频事件：30-90秒
   const delay = randomRange(30000, 90000);
   player.nextEventTime = Date.now() + delay;
+  console.log('[renderer] next event in', (delay/1000).toFixed(1), 'seconds');
   
   if (eventTimer) clearTimeout(eventTimer);
   eventTimer = setTimeout(() => {
@@ -877,7 +905,11 @@ function scheduleNextEvent() {
 }
 
 function triggerEvent() {
-  if (eventInProgress) return;
+  console.log('[renderer] triggerEvent called');
+  if (eventInProgress) {
+    console.log('[renderer] event already in progress, skip');
+    return;
+  }
   eventInProgress = true;
   
   // 根据气运和心境计算事件类型权重
@@ -895,8 +927,10 @@ function triggerEvent() {
   if (mindState === 'enlightenment') weights.qi += 15;
   
   const eventType = weightedRandom(weights);
+  console.log('[renderer] event type:', eventType);
   const eventPool = XIUZHEN_EVENTS[eventType];
   const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+  console.log('[renderer] event:', event.title);
   
   // 切换到受扰状态
   setState('disturbed');
@@ -906,12 +940,18 @@ function triggerEvent() {
 }
 
 function showEventBubble(event) {
+  console.log('[renderer] showEventBubble:', event.title);
   const bubble = document.getElementById('eventBubble');
   const title = document.getElementById('bubbleTitle');
   const type = document.getElementById('bubbleType');
   const desc = document.getElementById('bubbleDesc');
   const choices = document.getElementById('choices');
   const result = document.getElementById('choiceResult');
+  
+  if (!bubble) {
+    console.error('[renderer] eventBubble element not found!');
+    return;
+  }
   
   title.textContent = event.title;
   type.textContent = event.type === 'daily' ? '日常修炼' : event.type === 'qi' ? '奇遇' : '危机';
@@ -929,10 +969,12 @@ function showEventBubble(event) {
   });
   
   bubble.classList.add('show');
+  console.log('[renderer] bubble shown');
   player.eventCount++;
 }
 
 function resolveChoice(event, choiceId) {
+  console.log('[renderer] resolveChoice:', choiceId, 'for event:', event.title);
   const result = event.resolve(choiceId, player);
   
   // 禁用所有按钮
@@ -942,6 +984,7 @@ function resolveChoice(event, choiceId) {
   // 显示结果
   const resultDiv = document.getElementById('choiceResult');
   resultDiv.innerHTML = `<strong>${result.success ? '✓' : '✗'}</strong> ${result.msg}`;
+  console.log('[renderer] choice result:', result.success, result.msg);
   
   // 应用结果
   if (result.exp) player.exp += result.exp;
@@ -967,6 +1010,7 @@ function resolveChoice(event, choiceId) {
   updateUI();
   updateHiddenStats();
   saveGame();
+  console.log('[renderer] choice resolved, state saved');
   
   // 5秒后关闭气泡
   setTimeout(() => {
@@ -974,6 +1018,7 @@ function resolveChoice(event, choiceId) {
     eventInProgress = false;
     setState('closed');
     scheduleNextEvent();
+    console.log('[renderer] bubble closed, next event scheduled');
   }, 5000);
 }
 
@@ -1050,9 +1095,15 @@ function showBubble(title, desc, rewards, success) {
 
 // ==================== 状态切换 ====================
 function setState(state) {
+  console.log('[renderer] setState:', state);
   currentState = state;
   const wrapper = document.getElementById('cultivatorWrapper');
   const label = document.getElementById('stateLabel');
+  
+  if (!wrapper) {
+    console.error('[renderer] cultivatorWrapper not found!');
+    return;
+  }
   
   wrapper.className = 'cultivator-wrapper state-' + state;
   
@@ -1067,12 +1118,16 @@ function setState(state) {
 
 // ==================== UI 更新 ====================
 function updateUI() {
-  // 极简UI，主要通过小人状态和气泡展示
-  // 隐藏属性在鼠标悬停时显示
+  console.log('[renderer] updateUI');
 }
 
 function updateHiddenStats() {
+  console.log('[renderer] updateHiddenStats');
   const stats = document.getElementById('hiddenStats');
+  if (!stats) {
+    console.error('[renderer] hiddenStats element not found!');
+    return;
+  }
   const realm = REALMS[player.realm];
   const root = SPIRITUAL_ROOTS[player.spiritualRoot];
   const mind = MIND_STATES[player.mindState];
@@ -1083,6 +1138,7 @@ function updateHiddenStats() {
     <div class="stat-line">灵根: ${root.name} | 心境: <span style="color:${mind.color}">${mind.name}</span></div>
     <div class="stat-line">气运: ${player.luck} | 事件: ${player.eventCount}</div>
   `;
+  console.log('[renderer] updateHiddenStats complete');
 }
 
 // ==================== 生成器 ====================
@@ -1156,7 +1212,20 @@ window.addEventListener('beforeunload', () => {
 // });
 
 // ==================== 启动 ====================
-loadGame();
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[renderer] DOM ready');
+  console.log('[renderer] mountGameUI');
+  console.log('[renderer] mountEventSystem');
+  console.log('[renderer] mountInteractionLayer');
+  
+  try {
+    loadGame();
+    console.log('[renderer] loadGame success');
+  } catch (e) {
+    console.error('[renderer] loadGame failed:', e);
+    initNewGame();
+  }
+});
 </script>
 </body>
 </html>

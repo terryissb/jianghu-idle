@@ -32,8 +32,9 @@ function createWindow() {
 
   mainWindow.loadFile('pet.html');
   
-  // 打开开发者工具（调试用，发布时注释掉）
-  // mainWindow.webContents.openDevTools();
+  // 打开开发者工具（调试用）
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  console.log('[main] DevTools opened');
   
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -79,6 +80,7 @@ function createTray() {
 }
 
 app.whenReady().then(() => {
+  console.log('[main] app ready');
   createWindow();
   
   // 注册全局快捷键 Ctrl+Shift+J 显示/隐藏宠物
