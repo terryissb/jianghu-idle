@@ -55,8 +55,6 @@ export class RuntimeKernel {
   }
 
   tick() {
-    console.log('[KERNEL] tick #' + this.tickCount);
-
     const effects = calculateTechniqueEffects(State.techniques.active);
     const growth = ROOTS[State.spiritualRoot].growth * (1 + effects.cultivationSpeed);
     const bonus = State.mindState === 'enlightenment' ? 1.2 : State.mindState === 'demon' ? 0.7 : 1;
@@ -75,9 +73,10 @@ export class RuntimeKernel {
     this.ui.updateStats();
 
     this.tickCount++;
-    const checkInterval = State.meditationMode ? 20 : Math.floor(Math.random() * 20) + 10;
+    const checkInterval = State.meditationMode ? 15 : Math.floor(Math.random() * 10) + 5;
     if (this.tickCount >= checkInterval) {
       this.tickCount = 0;
+      console.log('[KERNEL] event check');
       if (!State.meditationMode) {
         const event = this.eventEngine.roll();
         if (event) {
@@ -156,7 +155,7 @@ export class RuntimeKernel {
   }
 
   scheduleEvent() {
-    const delay = Math.floor(Math.random() * 25000) + 15000;
+    const delay = Math.floor(Math.random() * 15000) + 10000;
     console.log('[KERNEL] next event in', (delay / 1000).toFixed(0), 's');
     if (this.eventTimer) clearTimeout(this.eventTimer);
     this.eventTimer = setTimeout(() => {
@@ -164,6 +163,9 @@ export class RuntimeKernel {
         this.eventEngine.eventInProgress = true;
         const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
         this.ui.showEvent(event);
+      } else {
+        console.log('[KERNEL] event skipped (in progress or meditation), rescheduling');
+        this.scheduleEvent();
       }
     }, delay);
   }

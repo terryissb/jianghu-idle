@@ -126,7 +126,7 @@ export class EventEngine {
   }
 
   getEventChance() {
-    let base = State.meditationMode ? 0.985 : 0.97;
+    let base = State.meditationMode ? 0.95 : 0.92;
     const effects = calculateTechniqueEffects(State.techniques.active);
     if (effects.eventReduction > 0) {
       base += effects.eventReduction * 0.05;
