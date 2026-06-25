@@ -1,5 +1,4 @@
-import { State, REALMS, ROOTS, MINDS, ELEMENTS, formatTimestamp, getRealmProgress } from '../engine/State.js';
-import { getAllHistory } from '../engine/HistorySystem.js';
+import { State, REALMS, ROOTS, MINDS, ELEMENTS, getRealmProgress } from '../engine/State.js';
 import { getActiveTechniques, getLearnedTechniques } from '../engine/TechniqueSystem.js';
 
 export class UIManager {
@@ -9,13 +8,11 @@ export class UIManager {
     this.eventBubble = document.getElementById('eventBubble');
     this.hiddenStats = document.getElementById('hiddenStats');
     this.stateLabel = document.getElementById('stateLabel');
-    this.historyPanel = document.getElementById('historyPanel');
-    this.techniquePanel = document.getElementById('techniquePanel');
-    this.realmPanel = document.getElementById('realmPanel');
+    this.lifePanel = document.getElementById('lifePanel');
   }
 
   ensureDOM() {
-    const ids = ['eventBubble', 'hiddenStats', 'stateLabel', 'historyPanel', 'techniquePanel', 'realmPanel', 'meditationBtn'];
+    const ids = ['eventBubble', 'hiddenStats', 'stateLabel', 'lifePanel', 'meditationBtn'];
     ids.forEach(id => {
       if (!document.getElementById(id)) {
         console.warn('[UI] missing #' + id + ', creating...');
@@ -36,6 +33,23 @@ export class UIManager {
       `;
       bubble.className = 'event-bubble';
     }
+
+    const panel = document.getElementById('lifePanel');
+    if (panel && !document.getElementById('profileSection')) {
+      panel.innerHTML = `
+        <div class="life-header">
+          <span class="life-title">📜 修仙回溯</span>
+          <span class="life-close" onclick="document.getElementById('lifePanel').classList.remove('show')">✕</span>
+        </div>
+        <div class="life-body">
+          <div class="life-section" id="profileSection"></div>
+          <div class="life-section" id="attributeSection"></div>
+          <div class="life-section" id="techniqueSection"></div>
+          <div class="life-section" id="timelineSection"></div>
+        </div>
+      `;
+      panel.className = 'life-panel';
+    }
   }
 
   mount() {
@@ -43,13 +57,9 @@ export class UIManager {
     this.updateStats();
   }
 
-  // ==================== Event Bubble ====================
   showEvent(event) {
     console.log('[UI] showEvent:', event.title);
-    if (!this.eventBubble) {
-      console.error('[UI] eventBubble not found');
-      return;
-    }
+    if (!this.eventBubble) return;
 
     this.eventBubble.style.display = 'block';
     this.eventBubble.style.visibility = 'visible';
@@ -67,7 +77,7 @@ export class UIManager {
       typeEl.textContent = event.type === 'daily' ? '日常' : event.type === 'qi' ? '奇遇' : event.type === 'crisis' ? '危机' : '境界';
       typeEl.className = 'bubble-type type-' + (event.type === 'realm_event' ? 'daily' : event.type);
     }
-    if (desc) desc.textContent = event.desc;
+    if (desc) desc.textContent = event.narrative || event.desc;
     if (result) result.innerHTML = '';
     if (choices) {
       choices.innerHTML = '';
@@ -128,141 +138,92 @@ export class UIManager {
     }, 3000);
   }
 
-  // ==================== History Panel ====================
+  // ==================== Life Panel (v2.3) ====================
   showHistoryPanel() {
     console.log('[UI] showHistoryPanel');
-    if (!this.historyPanel) return;
-    this.historyPanel.classList.add('show');
-    this.renderHistory();
+    if (!this.lifePanel) return;
+    this.lifePanel.classList.add('show');
+    this.renderLifePanel();
   }
 
   hideHistoryPanel() {
-    if (!this.historyPanel) return;
-    this.historyPanel.classList.remove('show');
+    if (!this.lifePanel) return;
+    this.lifePanel.classList.remove('show');
   }
 
-  renderHistory() {
-    // ① 事件时间线
-    const tl = document.getElementById('historyContent');
-    if (tl) {
-      const events = getAllHistory();
-      if (events.length === 0) {
-        tl.innerHTML = '<div class="tl-empty">修仙之路刚刚开始，尚无记录。</div>';
-      } else {
-        tl.innerHTML = events.map(e => {
-          const timeStr = formatTimestamp(e.time);
-          return `<div class="tl-item">${e.title}（${e.result}）</div>`;
-        }).join('');
-      }
+  renderLifePanel() {
+    if (!this.kernel) return;
+    const history = this.kernel.historyManager;
+    const records = history.getRecentRecords();
+
+    // ① Profile Section
+    const profile = document.getElementById('profileSection');
+    if (profile) {
+      const realm = REALMS[State.realm];
+      profile.innerHTML = `
+        <div class="profile-card">
+          <h2>${State.name || '无名散修'}</h2>
+          <p>境界：${realm.name}</p>
+          <p>修为：${Math.floor(State.exp)}</p>
+          <p>累计事件：${history.getTotalEvents()}</p>
+          <p>掌握功法：${State.techniques.learned.length}</p>
+          <p>突破次数：${history.getBreakthroughCount()}</p>
+        </div>
+      `;
     }
 
-    // ② 人物当前状态
-    const st = document.getElementById('statusContent');
-    if (st) {
-      const realm = REALMS[State.realm];
+    // ② Attribute Section
+    const attr = document.getElementById('attributeSection');
+    if (attr) {
       const mindMap = { stable: 35, turbulent: 20, enlightenment: 50, demon: 5 };
       const mindVal = mindMap[State.mindState] || 30;
       const bodyVal = Math.floor(State.hp);
       const spiritVal = Math.floor(State.mp);
       const insightVal = Math.floor(State.luck * 2.5);
-      st.innerHTML = `
-        <div><span class="st-label">境界</span>${realm.name}</div>
-        <div><span class="st-label">修为</span>${Math.floor(State.exp)}</div>
-        <div><span class="st-label">心境</span>${mindVal}</div>
-        <div><span class="st-label">灵力</span>${spiritVal}</div>
-        <div><span class="st-label">肉身</span>${bodyVal}</div>
-        <div><span class="st-label">悟性</span>${insightVal}</div>
+      attr.innerHTML = `
+        <div class="attr-grid">
+          <div class="attr-item"><span class="attr-label">心境</span><span class="attr-value">${mindVal}</span></div>
+          <div class="attr-item"><span class="attr-label">灵力</span><span class="attr-value">${spiritVal}</span></div>
+          <div class="attr-item"><span class="attr-label">肉身</span><span class="attr-value">${bodyVal}</span></div>
+          <div class="attr-item"><span class="attr-label">悟性</span><span class="attr-value">${insightVal}</span></div>
+        </div>
       `;
     }
 
-    // ③ 功法列表
-    const tc = document.getElementById('techniqueContent');
-    if (tc) {
+    // ③ Technique Section
+    const tech = document.getElementById('techniqueSection');
+    if (tech) {
       const learned = getLearnedTechniques();
       if (learned.length === 0) {
-        tc.innerHTML = '<div class="tc-empty">尚未习得功法</div>';
+        tech.innerHTML = '<div class="tc-empty">尚未习得功法</div>';
       } else {
-        tc.innerHTML = learned.map(t => `<div class="tc-item">${t.name}（Lv.${t.level}）</div>`).join('');
+        tech.innerHTML = learned.map(t => `
+          <div class="technique-card">
+            <div>${t.name}</div>
+            <div>Lv.${t.level}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ④ Timeline Section
+    const timeline = document.getElementById('timelineSection');
+    if (timeline) {
+      if (records.length === 0) {
+        timeline.innerHTML = '<div class="tl-empty">修仙之路刚刚开始，尚无记录。</div>';
+      } else {
+        timeline.innerHTML = records.map(r => `
+          <div class="timeline-item">
+            <div class="timeline-title">${r.title}</div>
+            <div class="timeline-time">${r.getFormattedTime()}</div>
+            <div class="timeline-narrative">${r.narrative}</div>
+            <div class="timeline-outcome">${r.outcome}</div>
+          </div>
+        `).join('');
       }
     }
   }
 
-  // ==================== Technique Panel ====================
-  showTechniquePanel() {
-    if (!this.techniquePanel) return;
-    this.techniquePanel.classList.add('show');
-    this.renderTechniques();
-  }
-
-  hideTechniquePanel() {
-    if (!this.techniquePanel) return;
-    this.techniquePanel.classList.remove('show');
-  }
-
-  renderTechniques() {
-    const active = getActiveTechniques();
-    const learned = getLearnedTechniques();
-    const activeEl = this.techniquePanel.querySelector('.technique-active');
-    const allEl = this.techniquePanel.querySelector('.technique-all');
-    if (activeEl) {
-      activeEl.innerHTML = active.length === 0
-        ? '<div class="panel-empty">暂无激活功法</div>'
-        : active.map(t => `
-          <div class="technique-item technique-${t.type}">
-            <div class="technique-name">${t.name} Lv.${t.level}</div>
-            <div class="technique-desc">${t.desc}</div>
-            <div class="technique-focus">${t.focus}</div>
-          </div>
-        `).join('');
-    }
-    if (allEl) {
-      allEl.innerHTML = learned.length === 0
-        ? '<div class="panel-empty">尚未习得功法</div>'
-        : learned.map(t => `
-          <div class="technique-item technique-${t.type}">
-            <div class="technique-name">${t.name} Lv.${t.level}</div>
-            <div class="technique-desc">${t.desc}</div>
-          </div>
-        `).join('');
-    }
-  }
-
-  // ==================== Realm Panel ====================
-  showRealmPanel() {
-    if (!this.realmPanel) return;
-    this.realmPanel.classList.add('show');
-    this.renderRealm();
-  }
-
-  hideRealmPanel() {
-    if (!this.realmPanel) return;
-    this.realmPanel.classList.remove('show');
-  }
-
-  renderRealm() {
-    const realm = REALMS[State.realm];
-    const next = REALMS[State.realm + 1];
-    const pct = getRealmProgress();
-    const el = this.realmPanel.querySelector('.panel-content');
-    if (!el) return;
-    el.innerHTML = `
-      <div class="realm-current">
-        <div class="realm-name">${realm.name}</div>
-        <div class="realm-progress-bar">
-          <div class="realm-progress-fill" style="width:${pct}%"></div>
-        </div>
-        <div class="realm-progress-text">${Math.floor(State.exp)} / ${realm.expNeed} (${pct}%)</div>
-      </div>
-      ${next ? `<div class="realm-next">下一境界：${next.name}（需 ${next.expNeed} 修为）</div>` : '<div class="realm-next">已至巅峰</div>'}
-      <div class="realm-info">
-        <div>灵根：${ROOTS[State.spiritualRoot].name}</div>
-        <div>五行：${ELEMENTS[State.element]}</div>
-        <div>心境：${MINDS[State.mindState].name}</div>
-      </div>
-    `;
-  }
-
-  // ==================== Stats & State ====================
   updateStats() {
     const realm = REALMS[State.realm];
     const root = ROOTS[State.spiritualRoot];

@@ -33,6 +33,7 @@ export const ELEMENTS = {
 };
 
 export let State = {
+  name: '无名散修',
   realm: 0,
   exp: 0,
   hp: 100,

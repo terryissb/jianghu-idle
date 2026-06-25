@@ -2,7 +2,8 @@ import { State, REALMS, ROOTS, MINDS, loadState, saveState, formatTime } from '.
 import { EventEngine, EVENTS } from './EventEngine.js';
 import { UIManager } from '../ui/UIManager.js';
 import { InteractionManager } from '../interaction/InteractionManager.js';
-import { recordEvent, recordBreakthrough, recordMeditation } from './HistorySystem.js';
+import { LifeRecord } from '../models/LifeRecord.js';
+import { HistoryManager } from '../models/HistoryManager.js';
 import { calculateTechniqueEffects, learnTechnique, activateTechnique, TECHNIQUES } from './TechniqueSystem.js';
 
 export class RuntimeKernel {
@@ -10,6 +11,7 @@ export class RuntimeKernel {
     this.ui = null;
     this.eventEngine = null;
     this.interaction = null;
+    this.historyManager = new HistoryManager();
     this.timer = null;
     this.eventTimer = null;
     this.tickCount = 0;
@@ -21,14 +23,11 @@ export class RuntimeKernel {
 
     this.ui = new UIManager(this);
     this.ui.mount();
-    console.log('[UI] mounted');
 
     this.eventEngine = new EventEngine();
-    console.log('[ENGINE] created');
 
     this.interaction = new InteractionManager(this);
     this.interaction.bind();
-    console.log('[INTERACTION] bound');
 
     const offline = loadState();
     this.ui.updateStats();
@@ -91,14 +90,29 @@ export class RuntimeKernel {
     if (State.exp >= realm.expNeed) {
       const effects = calculateTechniqueEffects(State.techniques.active);
       const rate = 0.5 + (ROOTS[State.spiritualRoot].growth - 1) * 0.2 + State.luck * 0.001 + effects.breakthroughRate;
+      const realmBefore = REALMS[State.realm].name;
       if (Math.random() < rate) {
         State.exp -= realm.expNeed;
         State.realm++;
         State.maxHp += 50 * (State.realm + 1);
         State.maxMp += 30 * (State.realm + 1);
         State.hp = State.maxHp;
-        recordBreakthrough(true);
-        this.ui.showSystemBubble('境界突破', `突破至「${REALMS[State.realm].name}」！`);
+        const realmAfter = REALMS[State.realm].name;
+
+        const record = new LifeRecord({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          title: '境界突破',
+          narrative: '冲击瓶颈，修为水到渠成。',
+          outcome: `突破至「${realmAfter}」！`,
+          result: 'success',
+          realmBefore,
+          realmAfter,
+          rarity: 'rare'
+        });
+        this.historyManager.addRecord(record);
+
+        this.ui.showSystemBubble('境界突破', `突破至「${realmAfter}」！`);
         this.ui.updateStats();
         setTimeout(() => {
           const event = this.eventEngine.rollRealmEvent();
@@ -106,7 +120,19 @@ export class RuntimeKernel {
         }, 2000);
       } else {
         State.exp = Math.floor(State.exp * 0.5);
-        recordBreakthrough(false);
+        const record = new LifeRecord({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          title: '突破失败',
+          narrative: '冲击瓶颈，未能成功。',
+          outcome: '冲击瓶颈失败，修为受损。',
+          result: 'fail',
+          realmBefore,
+          realmAfter: realmBefore,
+          rarity: 'normal'
+        });
+        this.historyManager.addRecord(record);
+
         this.ui.showSystemBubble('突破失败', '冲击瓶颈失败，修为受损。');
         this.ui.updateStats();
       }
@@ -119,10 +145,26 @@ export class RuntimeKernel {
     if (res.exp) State.exp += res.exp;
     if (res.luck) State.luck += res.luck;
 
-    recordEvent(event.title, choiceId, res.msg, { expChange: res.exp, luckChange: res.luck });
-
+    const realmBefore = REALMS[State.realm].name;
     this.checkBreakthrough();
+    const realmAfter = REALMS[State.realm].name;
     saveState();
+
+    const record = new LifeRecord({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      title: event.title,
+      narrative: event.narrative,
+      outcome: res.outcome || res.msg,
+      choice: choiceId,
+      result: res.s ? 'success' : 'fail',
+      rewards: { exp: res.exp, luck: res.luck },
+      realmBefore,
+      realmAfter,
+      rarity: event.type === 'crisis' ? 'rare' : event.type === 'qi' ? 'uncommon' : 'normal'
+    });
+    this.historyManager.addRecord(record);
+
     this.ui.showResult(res);
     this.eventEngine.reset();
 
@@ -145,7 +187,16 @@ export class RuntimeKernel {
       console.log('[KERNEL] meditation ON');
     } else {
       if (this.meditationTicks > 0) {
-        recordMeditation(this.meditationTicks);
+        const record = new LifeRecord({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          title: '静修',
+          narrative: '入定静修，心神合一。',
+          outcome: `静修 ${this.meditationTicks} 秒，修为稳步提升。`,
+          result: 'success',
+          rarity: 'normal'
+        });
+        this.historyManager.addRecord(record);
       }
       this.ui.setState('闭目修炼');
       console.log('[KERNEL] meditation OFF');
@@ -164,7 +215,7 @@ export class RuntimeKernel {
         const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
         this.ui.showEvent(event);
       } else {
-        console.log('[KERNEL] event skipped (in progress or meditation), rescheduling');
+        console.log('[KERNEL] event skipped, rescheduling');
         this.scheduleEvent();
       }
     }, delay);
@@ -176,6 +227,19 @@ export class RuntimeKernel {
     const t = available[Math.floor(Math.random() * available.length)];
     learnTechnique(t.id);
     activateTechnique(t.id);
+
+    const record = new LifeRecord({
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+      title: '习得功法',
+      narrative: `偶然机缘，习得「${t.name}」。`,
+      outcome: `掌握「${t.name}」，修为有所增益。`,
+      result: 'success',
+      techniquesUnlocked: [t.name],
+      rarity: t.type === 'rare' ? 'rare' : 'uncommon'
+    });
+    this.historyManager.addRecord(record);
+
     return t;
   }
 }
