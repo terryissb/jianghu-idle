@@ -103,7 +103,24 @@ export class UIManager {
     const choices = document.querySelectorAll('.choice-btn');
     choices.forEach(b => b.disabled = true);
     const result = document.getElementById('choiceResult');
-    if (result) result.innerHTML = `<strong>${res.s ? '✓' : '✗'}</strong> ${res.msg}`;
+    if (!result) return;
+
+    let html = `<strong>${res.s ? '✓' : '✗'}</strong> ${res.msg}`;
+
+    // 显示 Impact
+    if (res.impact) {
+      const items = res.impact.toDisplay();
+      if (items.length > 0) {
+        html += '<div class="impact-display">';
+        html += '<div class="impact-divider">━━━━━━━━━━━━━━</div>';
+        items.forEach(item => {
+          html += `<div class="impact-item">${item}</div>`;
+        });
+        html += '</div>';
+      }
+    }
+
+    result.innerHTML = html;
   }
 
   hideEvent() {
@@ -252,6 +269,12 @@ export class UIManager {
                 </div>
                 <div class="timeline-card-narrative">${r.narrative.replace(/\n/g, '<br>')}</div>
                 <div class="timeline-card-outcome">${r.outcome}</div>
+                ${r.impact && r.impact.toDisplay().length > 0 ? `
+                  <div class="timeline-card-impact">
+                    <div class="timeline-impact-title">获得：</div>
+                    ${r.impact.toDisplay().map(item => `<div class="timeline-impact-item">${item}</div>`).join('')}
+                  </div>
+                ` : ''}
                 ${r.flavorText ? `<div class="timeline-card-flavor">${r.flavorText.replace(/\n/g, '<br>')}</div>` : ''}
               </div>
             `;

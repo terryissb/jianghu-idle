@@ -5,6 +5,7 @@ import { InteractionManager } from '../interaction/InteractionManager.js';
 import { LifeRecord } from '../models/LifeRecord.js';
 import { HistoryManager } from '../models/HistoryManager.js';
 import { MilestoneRecord, MilestoneManager } from '../models/MilestoneRecord.js';
+import { ImpactEngine } from '../models/Impact.js';
 import { calculateTechniqueEffects, learnTechnique, activateTechnique, TECHNIQUES } from './TechniqueSystem.js';
 
 export class RuntimeKernel {
@@ -175,8 +176,11 @@ export class RuntimeKernel {
   handleChoice(event, choiceId) {
     console.log('[KERNEL] choice:', choiceId);
     const res = event.resolve(choiceId);
-    if (res.exp) State.exp += res.exp;
-    if (res.luck) State.luck += res.luck;
+
+    // 应用 Impact
+    if (res.impact) {
+      ImpactEngine.apply(State, res.impact);
+    }
 
     const realmBefore = REALMS[State.realm].name;
     this.checkBreakthrough();
@@ -192,7 +196,7 @@ export class RuntimeKernel {
       flavorText: res.flavorText || '',
       choice: choiceId,
       result: res.s ? 'success' : 'fail',
-      rewards: res.rewards || { exp: res.exp, luck: res.luck },
+      impact: res.impact,
       realmBefore,
       realmAfter,
       rarity: event.rarity || 'normal'

@@ -8,7 +8,7 @@ export class LifeRecord {
     flavorText = '',
     choice,
     result,
-    rewards = {},
+    impact = null,
     realmBefore,
     realmAfter,
     techniquesUnlocked = [],
@@ -22,7 +22,7 @@ export class LifeRecord {
     this.flavorText = flavorText;
     this.choice = choice;
     this.result = result;
-    this.rewards = rewards;
+    this.impact = impact;
     this.realmBefore = realmBefore;
     this.realmAfter = realmAfter;
     this.techniquesUnlocked = techniquesUnlocked;
