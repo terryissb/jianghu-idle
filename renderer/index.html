@@ -286,7 +286,27 @@
     text-align: center;
   }
 
-  /* Meditation Button */
+  /* Reset Button */
+  .reset-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 48px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(184,134,11,0.4);
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    transition: all 0.3s ease;
+    z-index: 10000;
+  }
+  .reset-btn:hover { background: rgba(179,57,57,0.5); border-color: #b33939; color: #fff; }
   .meditation-btn {
     position: absolute;
     bottom: 8px;
@@ -460,6 +480,9 @@
 
     <!-- Meditation Toggle -->
     <button class="meditation-btn" id="meditationBtn" title="静修模式">🌿</button>
+
+    <!-- Reset Button -->
+    <button class="reset-btn" id="resetBtn" title="从头修炼">🔁</button>
   </div>
 </div>
 

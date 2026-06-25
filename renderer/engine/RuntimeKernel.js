@@ -1,4 +1,4 @@
-import { State, REALMS, ROOTS, MINDS, loadState, saveState, formatTime } from './State.js';
+import { State, REALMS, ROOTS, MINDS, ELEMENTS, loadState, saveState, formatTime } from './State.js';
 import { EventEngine, EVENTS } from './EventEngine.js';
 import { UIManager } from '../ui/UIManager.js';
 import { InteractionManager } from '../interaction/InteractionManager.js';
@@ -241,5 +241,44 @@ export class RuntimeKernel {
     this.historyManager.addRecord(record);
 
     return t;
+  }
+
+  resetGame() {
+    console.log('[KERNEL] reset game');
+    localStorage.removeItem('xiuzhen_save_v2');
+
+    State.name = '无名散修';
+    State.realm = 0;
+    State.exp = 0;
+    State.hp = 100;
+    State.maxHp = 100;
+    State.mp = 50;
+    State.maxMp = 50;
+    State.luck = 10;
+    State.gold = 0;
+    State.eventCount = 0;
+    State.totalTime = 0;
+    State.meditationMode = false;
+    State.techniques = { active: [], learned: [] };
+    State.history = { events: [] };
+
+    const roots = Object.keys(ROOTS);
+    State.spiritualRoot = roots[Math.floor(Math.random() * roots.length)];
+    const elements = Object.keys(ELEMENTS);
+    State.element = elements[Math.floor(Math.random() * elements.length)];
+
+    this.historyManager.clear();
+    this.tickCount = 0;
+    this.meditationTicks = 0;
+    this.eventEngine.reset();
+
+    if (this.eventTimer) clearTimeout(this.eventTimer);
+    this.scheduleEvent();
+
+    this.ui.updateStats();
+    this.ui.setState('闭目修炼');
+    this.ui.showSystemBubble('从头开始', '修为散尽，重新踏上修仙之路。');
+
+    console.log('[KERNEL] reset complete');
   }
 }

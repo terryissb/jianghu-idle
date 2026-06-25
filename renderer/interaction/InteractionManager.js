@@ -71,6 +71,17 @@ export class InteractionManager {
       });
     }
 
+    // Reset button
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn && this.kernel) {
+      resetBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('确定要放弃当前修为，从头开始修炼吗？')) {
+          this.kernel.resetGame();
+        }
+      });
+    }
+
     console.log('[INTERACTION] bound');
   }
 }
