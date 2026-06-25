@@ -1,5 +1,5 @@
 export const REALMS = [
-  { name: '炼气期', expNeed: 100 },
+  { name: '炼气期', expNeed: 100, subLevels: 13 },
   { name: '筑基期', expNeed: 500 },
   { name: '金丹期', expNeed: 2000 },
   { name: '元婴期', expNeed: 8000 },
@@ -35,6 +35,7 @@ export const ELEMENTS = {
 export let State = {
   name: '无名散修',
   realm: 0,
+  subLevel: 0,
   exp: 0,
   hp: 100,
   maxHp: 100,
@@ -50,6 +51,7 @@ export let State = {
   meditationMode: false,
   techniques: { active: [], learned: [] },
   history: { events: [] },
+  buffs: [],
   lastSave: Date.now()
 };
 
@@ -62,6 +64,8 @@ export function loadState() {
       State = { ...State, ...data };
       if (!State.techniques) State.techniques = { active: [], learned: [] };
       if (!State.history) State.history = { events: [] };
+      if (!State.buffs) State.buffs = [];
+      if (!State.subLevel) State.subLevel = 0;
       if (offline > 10) {
         const growth = ROOTS[State.spiritualRoot].growth;
         const gain = Math.floor(offline * 0.3 * growth);
@@ -110,7 +114,11 @@ export function addHistory(entry) {
 }
 
 export function getRealmName() {
-  return REALMS[State.realm].name;
+  const realm = REALMS[State.realm];
+  if (realm.subLevels && realm.subLevels > 1) {
+    return `${realm.name} ${State.subLevel + 1}层`;
+  }
+  return realm.name;
 }
 
 export function getRealmProgress() {

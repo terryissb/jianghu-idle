@@ -1,4 +1,4 @@
-import { State, REALMS, ROOTS, MINDS, ELEMENTS, getRealmProgress } from '../engine/State.js';
+import { State, REALMS, ROOTS, MINDS, ELEMENTS, getRealmName, getRealmProgress } from '../engine/State.js';
 import { getActiveTechniques, getLearnedTechniques } from '../engine/TechniqueSystem.js';
 
 export class UIManager {
@@ -293,12 +293,21 @@ export class UIManager {
     const pct = getRealmProgress();
     const active = getActiveTechniques();
     const meditationTag = State.meditationMode ? ' <span style="color:#3d7a37">[静修]</span>' : '';
+    
+    // Buff 显示
+    const buffs = State.buffs || [];
+    const buffHtml = buffs.map(b => {
+      const remaining = Math.ceil(b.remainingTime);
+      return `<span class="buff-tag ${b.type}">${b.name} ${remaining}s</span>`;
+    }).join('');
+    
     if (this.hiddenStats) {
       this.hiddenStats.innerHTML = `
-        <div class="stat-line">${realm.name} | ${Math.floor(State.exp)}/${realm.expNeed} (${pct}%)</div>
+        <div class="stat-line">${getRealmName()} | ${Math.floor(State.exp)}/${realm.expNeed} (${pct}%)</div>
         <div class="stat-line">灵根: ${root.name} | 五行: ${ELEMENTS[State.element]} | 心境: <span style="color:${mind.color}">${mind.name}</span></div>
         <div class="stat-line">气运: ${State.luck} | 事件: ${State.eventCount}${meditationTag}</div>
         ${active.length > 0 ? `<div class="stat-line">功法: ${active.map(t => t.name).join(', ')}</div>` : ''}
+        ${buffHtml ? `<div class="stat-line">${buffHtml}</div>` : ''}
       `;
     }
   }

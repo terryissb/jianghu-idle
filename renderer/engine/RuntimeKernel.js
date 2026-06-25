@@ -1,11 +1,11 @@
-import { State, REALMS, ROOTS, MINDS, ELEMENTS, loadState, saveState, formatTime } from './State.js';
+import { State, REALMS, ROOTS, MINDS, ELEMENTS, getRealmName, loadState, saveState, formatTime } from './State.js';
 import { EventEngine, EVENTS } from './EventEngine.js';
 import { UIManager } from '../ui/UIManager.js';
 import { InteractionManager } from '../interaction/InteractionManager.js';
 import { LifeRecord } from '../models/LifeRecord.js';
 import { HistoryManager } from '../models/HistoryManager.js';
 import { MilestoneRecord, MilestoneManager } from '../models/MilestoneRecord.js';
-import { ImpactEngine } from '../models/Impact.js';
+import { ImpactEngine, BuffEngine } from '../models/Impact.js';
 import { calculateTechniqueEffects, learnTechnique, activateTechnique, TECHNIQUES } from './TechniqueSystem.js';
 
 export class RuntimeKernel {
@@ -64,8 +64,12 @@ export class RuntimeKernel {
     const growth = ROOTS[State.spiritualRoot].growth * (1 + effects.cultivationSpeed);
     const bonus = State.mindState === 'enlightenment' ? 1.2 : State.mindState === 'demon' ? 0.7 : 1;
     const meditationBonus = State.meditationMode ? 1.5 : 1;
+    
+    // Buff 修为加成
+    const buffBonus = BuffEngine.tick(State);
+    const totalGrowth = growth * (1 + buffBonus);
 
-    State.exp += 0.5 * growth * bonus * meditationBonus;
+    State.exp += 0.5 * totalGrowth * bonus * meditationBonus;
     State.hp = Math.min(State.maxHp, State.hp + 0.1 * (1 + effects.bodyGrowth));
     State.totalTime++;
 
@@ -94,12 +98,41 @@ export class RuntimeKernel {
   checkBreakthrough() {
     const realm = REALMS[State.realm];
     if (State.exp >= realm.expNeed) {
+      // 炼气期：内部层级提升
+      if (realm.subLevels && State.subLevel < realm.subLevels - 1) {
+        State.exp -= realm.expNeed;
+        State.subLevel++;
+        State.maxHp += 10;
+        State.hp = State.maxHp;
+        const realmName = getRealmName();
+        
+        const record = new LifeRecord({
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+          title: '层级提升',
+          narrative: `修为精进，灵气愈发凝实。\n顺利提升至${realmName}。`,
+          outcome: `提升至「${realmName}」！`,
+          flavorText: '步步为营，\n方成大器。',
+          result: 'success',
+          realmBefore: getRealmName(),
+          realmAfter: getRealmName(),
+          rarity: 'normal'
+        });
+        this.historyManager.addRecord(record);
+        
+        this.ui.showSystemBubble('层级提升', `提升至「${realmName}」！`);
+        this.ui.updateStats();
+        return;
+      }
+      
+      // 大境界突破
       const effects = calculateTechniqueEffects(State.techniques.active);
       const rate = 0.5 + (ROOTS[State.spiritualRoot].growth - 1) * 0.2 + State.luck * 0.001 + effects.breakthroughRate;
       const realmBefore = REALMS[State.realm].name;
       if (Math.random() < rate) {
         State.exp -= realm.expNeed;
         State.realm++;
+        State.subLevel = 0;
         State.maxHp += 50 * (State.realm + 1);
         State.maxMp += 30 * (State.realm + 1);
         State.hp = State.maxHp;
@@ -303,6 +336,7 @@ export class RuntimeKernel {
 
     State.name = '无名散修';
     State.realm = 0;
+    State.subLevel = 0;
     State.exp = 0;
     State.hp = 100;
     State.maxHp = 100;
@@ -315,6 +349,7 @@ export class RuntimeKernel {
     State.meditationMode = false;
     State.techniques = { active: [], learned: [] };
     State.history = { events: [] };
+    State.buffs = [];
 
     const roots = Object.keys(ROOTS);
     State.spiritualRoot = roots[Math.floor(Math.random() * roots.length)];

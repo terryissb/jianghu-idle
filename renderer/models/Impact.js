@@ -10,6 +10,7 @@ export class EventImpact {
     this.techniqueExp = [];
     this.unlocks = [];
     this.penalties = [];
+    this.buff = null; // { name, type, value, duration }
   }
 
   static from({
@@ -22,7 +23,8 @@ export class EventImpact {
     breakthrough = 0,
     techniqueExp = [],
     unlocks = [],
-    penalties = []
+    penalties = [],
+    buff = null
   }) {
     const impact = new EventImpact();
     impact.cultivation = cultivation;
@@ -35,6 +37,7 @@ export class EventImpact {
     impact.techniqueExp = techniqueExp;
     impact.unlocks = unlocks;
     impact.penalties = penalties;
+    impact.buff = buff;
     return impact;
   }
 
@@ -56,6 +59,7 @@ export class EventImpact {
     if (this.breakthrough < 0) items.push(`突破感悟 ${this.breakthrough}%`);
     if (this.unlocks.length > 0) items.push(`获得：${this.unlocks.join('、')}`);
     if (this.penalties.length > 0) items.push(`失去：${this.penalties.join('、')}`);
+    if (this.buff) items.push(`增益：${this.buff.name}（${this.buff.duration}秒）`);
     return items;
   }
 }
@@ -66,17 +70,47 @@ export class ImpactEngine {
     if (impact.spirit) state.mp = Math.min(state.maxMp + impact.spirit, state.mp + impact.spirit);
     if (impact.body) state.hp = Math.min(state.maxHp + impact.body, state.hp + impact.body);
     if (impact.mind) {
-      const mindMap = { stable: 35, turbulent: 20, enlightenment: 50, demon: 5 };
-      // 简单模拟：mind 正向变化保持心境稳定
       if (impact.mind > 0 && state.mindState === 'demon') state.mindState = 'stable';
       if (impact.mind < 0 && state.mindState === 'stable') state.mindState = 'turbulent';
       if (impact.mind < -2 && state.mindState === 'turbulent') state.mindState = 'demon';
     }
     if (impact.insight) state.luck += impact.insight;
     if (impact.fortune) state.luck += impact.fortune;
-    if (impact.breakthrough) {
-      // 突破感悟加到 exp 上，作为额外修为
-      state.exp += impact.breakthrough * 0.5;
+    if (impact.breakthrough) state.exp += impact.breakthrough * 0.5;
+    
+    // 发放 Buff
+    if (impact.buff) {
+      if (!state.buffs) state.buffs = [];
+      state.buffs.push({
+        ...impact.buff,
+        remainingTime: impact.buff.duration
+      });
     }
+  }
+}
+
+export class BuffEngine {
+  static tick(state) {
+    if (!state.buffs || state.buffs.length === 0) return 0;
+    
+    let cultivationBonus = 0;
+    const remaining = [];
+    
+    for (const buff of state.buffs) {
+      buff.remainingTime--;
+      if (buff.remainingTime > 0) {
+        remaining.push(buff);
+        if (buff.type === 'cultivationSpeed') {
+          cultivationBonus += buff.value;
+        }
+      }
+    }
+    
+    state.buffs = remaining;
+    return cultivationBonus;
+  }
+  
+  static getActiveBuffs(state) {
+    return state.buffs || [];
   }
 }
