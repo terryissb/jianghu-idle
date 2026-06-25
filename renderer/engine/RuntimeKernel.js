@@ -4,6 +4,7 @@ import { UIManager } from '../ui/UIManager.js';
 import { InteractionManager } from '../interaction/InteractionManager.js';
 import { LifeRecord } from '../models/LifeRecord.js';
 import { HistoryManager } from '../models/HistoryManager.js';
+import { MilestoneRecord, MilestoneManager } from '../models/MilestoneRecord.js';
 import { calculateTechniqueEffects, learnTechnique, activateTechnique, TECHNIQUES } from './TechniqueSystem.js';
 
 export class RuntimeKernel {
@@ -12,6 +13,7 @@ export class RuntimeKernel {
     this.eventEngine = null;
     this.interaction = null;
     this.historyManager = new HistoryManager();
+    this.milestoneManager = new MilestoneManager();
     this.timer = null;
     this.eventTimer = null;
     this.tickCount = 0;
@@ -23,11 +25,14 @@ export class RuntimeKernel {
 
     this.ui = new UIManager(this);
     this.ui.mount();
+    console.log('[UI] mounted');
 
     this.eventEngine = new EventEngine();
+    console.log('[ENGINE] created');
 
     this.interaction = new InteractionManager(this);
     this.interaction.bind();
+    console.log('[INTERACTION] bound');
 
     const offline = loadState();
     this.ui.updateStats();
@@ -103,14 +108,41 @@ export class RuntimeKernel {
           id: crypto.randomUUID(),
           timestamp: Date.now(),
           title: '境界突破',
-          narrative: '冲击瓶颈，修为水到渠成。',
+          narrative: '冲击瓶颈，修为水到渠成。\n灵气汇聚，道基初凝。',
           outcome: `突破至「${realmAfter}」！`,
+          flavorText: '每一次突破，\n都是逆天而行。',
           result: 'success',
           realmBefore,
           realmAfter,
           rarity: 'rare'
         });
         this.historyManager.addRecord(record);
+
+        // 里程碑
+        if (!this.milestoneManager.hasFirst('first_breakthrough')) {
+          this.milestoneManager.markFirst('first_breakthrough');
+          const ms = new MilestoneRecord({
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+            title: '首次突破',
+            description: `首次突破至「${realmAfter}」`,
+            type: 'first_breakthrough',
+            realmName: realmAfter
+          });
+          this.milestoneManager.addMilestone(ms);
+        }
+        if (State.realm >= 3 && !this.milestoneManager.hasFirst('major_realm')) {
+          this.milestoneManager.markFirst('major_realm');
+          const ms = new MilestoneRecord({
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+            title: '踏入金丹',
+            description: '正式踏入金丹大道',
+            type: 'major_realm',
+            realmName: realmAfter
+          });
+          this.milestoneManager.addMilestone(ms);
+        }
 
         this.ui.showSystemBubble('境界突破', `突破至「${realmAfter}」！`);
         this.ui.updateStats();
@@ -124,8 +156,9 @@ export class RuntimeKernel {
           id: crypto.randomUUID(),
           timestamp: Date.now(),
           title: '突破失败',
-          narrative: '冲击瓶颈，未能成功。',
+          narrative: '冲击瓶颈，未能成功。\n灵气溃散，修为折损。',
           outcome: '冲击瓶颈失败，修为受损。',
+          flavorText: '大道修行，\n从来不是一帆风顺。',
           result: 'fail',
           realmBefore,
           realmAfter: realmBefore,
@@ -154,14 +187,15 @@ export class RuntimeKernel {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       title: event.title,
-      narrative: event.narrative,
+      narrative: res.narrative || event.narrative,
       outcome: res.outcome || res.msg,
+      flavorText: res.flavorText || '',
       choice: choiceId,
       result: res.s ? 'success' : 'fail',
-      rewards: { exp: res.exp, luck: res.luck },
+      rewards: res.rewards || { exp: res.exp, luck: res.luck },
       realmBefore,
       realmAfter,
-      rarity: event.type === 'crisis' ? 'rare' : event.type === 'qi' ? 'uncommon' : 'normal'
+      rarity: event.rarity || 'normal'
     });
     this.historyManager.addRecord(record);
 
@@ -191,8 +225,9 @@ export class RuntimeKernel {
           id: crypto.randomUUID(),
           timestamp: Date.now(),
           title: '静修',
-          narrative: '入定静修，心神合一。',
+          narrative: '入定静修，心神合一。\n远离纷扰，专注修行。',
           outcome: `静修 ${this.meditationTicks} 秒，修为稳步提升。`,
+          flavorText: '静能生慧，\n定能生慧。',
           result: 'success',
           rarity: 'normal'
         });
@@ -232,13 +267,28 @@ export class RuntimeKernel {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       title: '习得功法',
-      narrative: `偶然机缘，习得「${t.name}」。`,
+      narrative: `偶然机缘，习得「${t.name}」。\n功法奥妙，需细细参悟。`,
       outcome: `掌握「${t.name}」，修为有所增益。`,
+      flavorText: '功法传承，\n亦是道统延续。',
       result: 'success',
       techniquesUnlocked: [t.name],
       rarity: t.type === 'rare' ? 'rare' : 'uncommon'
     });
     this.historyManager.addRecord(record);
+
+    // 里程碑
+    if (!this.milestoneManager.hasFirst('first_technique')) {
+      this.milestoneManager.markFirst('first_technique');
+      const ms = new MilestoneRecord({
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+        title: '首部功法',
+        description: `获得《${t.name}》`,
+        type: 'first_technique',
+        realmName: REALMS[State.realm].name
+      });
+      this.milestoneManager.addMilestone(ms);
+    }
 
     return t;
   }
@@ -268,6 +318,7 @@ export class RuntimeKernel {
     State.element = elements[Math.floor(Math.random() * elements.length)];
 
     this.historyManager.clear();
+    this.milestoneManager.clear();
     this.tickCount = 0;
     this.meditationTicks = 0;
     this.eventEngine.reset();

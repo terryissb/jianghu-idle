@@ -155,6 +155,7 @@ export class UIManager {
     if (!this.kernel) return;
     const history = this.kernel.historyManager;
     const records = history.getRecentRecords();
+    const milestones = this.kernel.milestoneManager.getMilestones();
 
     // ① Profile Section
     const profile = document.getElementById('profileSection');
@@ -206,20 +207,58 @@ export class UIManager {
       }
     }
 
-    // ④ Timeline Section
+    // ④ Timeline Section (按日期分组)
     const timeline = document.getElementById('timelineSection');
     if (timeline) {
       if (records.length === 0) {
         timeline.innerHTML = '<div class="tl-empty">修仙之路刚刚开始，尚无记录。</div>';
       } else {
-        timeline.innerHTML = records.map(r => `
-          <div class="timeline-item">
-            <div class="timeline-title">${r.title}</div>
-            <div class="timeline-time">${r.getFormattedTime()}</div>
-            <div class="timeline-narrative">${r.narrative}</div>
-            <div class="timeline-outcome">${r.outcome}</div>
-          </div>
-        `).join('');
+        // 按日期分组
+        const groups = {};
+        records.forEach(r => {
+          const day = r.getDayLabel();
+          if (!groups[day]) groups[day] = [];
+          groups[day].push(r);
+        });
+
+        let html = '';
+        
+        // 里程碑
+        if (milestones.length > 0) {
+          html += '<div class="milestone-section">';
+          html += '<div class="milestone-title">🏆 人生里程碑</div>';
+          milestones.forEach(m => {
+            html += `
+              <div class="milestone-item">
+                <div class="milestone-name">${m.title}</div>
+                <div class="milestone-desc">${m.description}</div>
+                <div class="milestone-time">${m.getFormattedTime()}</div>
+              </div>
+            `;
+          });
+          html += '</div>';
+        }
+
+        // 时间线
+        Object.keys(groups).forEach(day => {
+          html += `<div class="timeline-day">${day}</div>`;
+          groups[day].forEach(r => {
+            const rarityClass = r.rarity === 'rare' ? 'rare' : r.rarity === 'uncommon' ? 'uncommon' : 'normal';
+            html += `
+              <div class="timeline-card ${rarityClass}">
+                <div class="timeline-card-header">
+                  <span class="timeline-card-title">${r.title}</span>
+                  <span class="timeline-card-time">${r.getFormattedTime()}</span>
+                </div>
+                <div class="timeline-card-narrative">${r.narrative.replace(/\n/g, '<br>')}</div>
+                <div class="timeline-card-outcome">${r.outcome}</div>
+                ${r.flavorText ? `<div class="timeline-card-flavor">${r.flavorText.replace(/\n/g, '<br>')}</div>` : ''}
+              </div>
+            `;
+          });
+        });
+
+        timeline.innerHTML = html;
       }
     }
   }
