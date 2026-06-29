@@ -1,0 +1,46 @@
+{
+  "id": "lingqi",
+  "title": "灵气暴走",
+  "narrative": "修炼途中，体内灵气忽然逆行，\n经脉隐隐作痛。",
+  "type": "daily",
+  "rarity": "normal",
+  "choices": [
+    { "id": "A", "text": "强行镇压（风险）" },
+    { "id": "B", "text": "顺势引导（平衡）" },
+    { "id": "C", "text": "暂停修炼（静修）" }
+  ],
+  "outcomes": {
+    "A": {
+      "successRate": 0.6,
+      "success": {
+        "msg": "镇压成功，修为大涨！",
+        "narrative": "修炼途中，灵气忽然逆行。\n\n你选择强行镇压。",
+        "outcome": "经过顽强压制，灵气终于归顺。",
+        "flavorText": "大道修行，\n从来不是一帆风顺。",
+        "impact": { "cultivation": 12, "breakthrough": 3 },
+        "buff": { "name": "灵气归顺", "modifiers": [{ "target": "cultivationSpeed", "value": 0.2 }], "duration": 90 }
+      },
+      "fail": {
+        "msg": "镇压失败，经脉受损。",
+        "narrative": "修炼途中，灵气忽然逆行。\n\n你选择强行镇压。",
+        "outcome": "强行镇压失败，灵气反噬。",
+        "flavorText": "强求不得，\n反受其害。",
+        "impact": { "cultivation": -8, "body": -2 }
+      }
+    },
+    "B": {
+      "msg": "顺水推舟，修为稳步提升。",
+      "narrative": "修炼途中，灵气忽然逆行。\n\n你选择顺势引导。",
+      "outcome": "顺水推舟，灵气自然流转。",
+      "flavorText": "顺势而为，\n方为上策。",
+      "impact": { "cultivation": 8, "breakthrough": 2 }
+    },
+    "C": {
+      "msg": "暂避锋芒，待灵气平息。",
+      "narrative": "修炼途中，灵气忽然逆行。\n\n你选择暂停修炼，暂避锋芒。",
+      "outcome": "暂避锋芒，待灵气自行平息。",
+      "flavorText": "知止而后有定，\n定而后能静。",
+      "impact": { "cultivation": 3, "mind": 1 }
+    }
+  }
+}

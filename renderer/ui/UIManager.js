@@ -1,5 +1,6 @@
 import { State, REALMS, ROOTS, MINDS, ELEMENTS, getRealmName, getRealmProgress } from '../engine/State.js';
-import { getActiveTechniques, getLearnedTechniques } from '../engine/TechniqueSystem.js';
+import { getActiveTechniques, getLearnedTechniques, getTypeLabel, getUpgradeProgress } from '../engine/TechniqueSystem.js';
+import { BuffSystem } from '../engine/BuffSystem.js';
 
 export class UIManager {
   constructor(kernel) {
@@ -44,6 +45,7 @@ export class UIManager {
         <div class="life-body">
           <div class="life-section" id="profileSection"></div>
           <div class="life-section" id="attributeSection"></div>
+          <div class="life-section" id="buffSection"></div>
           <div class="life-section" id="techniqueSection"></div>
           <div class="life-section" id="timelineSection"></div>
         </div>
@@ -74,7 +76,8 @@ export class UIManager {
 
     if (title) title.textContent = event.title;
     if (typeEl) {
-      typeEl.textContent = event.type === 'daily' ? '日常' : event.type === 'qi' ? '奇遇' : event.type === 'crisis' ? '危机' : '境界';
+      const typeMap = { daily: '日常', qi: '奇遇', crisis: '危机', realm_event: '境界', story_event: '剧情' };
+      typeEl.textContent = typeMap[event.type] || event.type;
       typeEl.className = 'bubble-type type-' + (event.type === 'realm_event' ? 'daily' : event.type);
     }
     if (desc) desc.textContent = event.narrative || event.desc;
@@ -118,6 +121,121 @@ export class UIManager {
         });
         html += '</div>';
       }
+    }
+
+    result.innerHTML = html;
+  }
+
+  // ==================== v2.4.2 EventFlow 分步展示 ====================
+  showFlowStep(step) {
+    const result = document.getElementById('choiceResult');
+    if (!result) return;
+
+    // 第一次初始化容器
+    if (!result.querySelector('.flow-container')) {
+      result.innerHTML = '<div class="flow-container"></div>';
+    }
+    const container = result.querySelector('.flow-container');
+
+    const el = document.createElement('div');
+    el.className = 'flow-step flow-step-' + step.type;
+    el.style.animation = 'fadeInUp 0.4s ease forwards';
+
+    switch (step.type) {
+      case 'title':
+        el.innerHTML = `<div class="flow-title">${step.title}</div>`;
+        break;
+      case 'intro':
+        el.innerHTML = `<div class="flow-narrative flow-intro">${step.text}</div>`;
+        break;
+      case 'development':
+        el.innerHTML = `<div class="flow-narrative flow-development">${step.text}</div>`;
+        break;
+      case 'conclusion':
+        el.innerHTML = `<div class="flow-narrative flow-conclusion ${step.success ? 'success' : 'fail'}">${step.text}</div>`;
+        break;
+      case 'impact':
+        {
+          let html = '<div class="flow-impact">';
+          html += '<div class="flow-impact-title">━━ 修为变化 ━━</div>';
+          step.items.forEach(item => {
+            const color = item.isPositive ? '#3d7a37' : '#b33939';
+            html += `<div class="flow-impact-item">`;
+            html += `<span class="flow-reason">${item.reason}</span>`;
+            html += `<span class="flow-stat" style="color:${color}">${item.label} ${item.value}</span>`;
+            html += `</div>`;
+          });
+          html += '</div>';
+          el.innerHTML = html;
+        }
+        break;
+      case 'buff':
+        el.innerHTML = `
+          <div class="flow-buff">
+            <div class="flow-buff-title">━━ 状态获得 ━━</div>
+            <div class="flow-buff-name">「${step.buff.name}」</div>
+            <div class="flow-buff-effect">${step.buff.effect}</div>
+            <div class="flow-buff-meta">持续 ${step.buff.duration} · 来源：${step.source}</div>
+          </div>
+        `;
+        break;
+      case 'technique':
+        el.innerHTML = `<div class="flow-technique">✦ ${step.text}</div>`;
+        break;
+      case 'flavor':
+        el.innerHTML = `<div class="flow-flavor">${step.text}</div>`;
+        break;
+    }
+
+    container.appendChild(el);
+    // 自动滚动到底部
+    result.scrollTop = result.scrollHeight;
+  }
+
+  onFlowComplete() {
+    // 流程完成，可以在这里添加视觉反馈
+    const result = document.getElementById('choiceResult');
+    if (result) {
+      const done = document.createElement('div');
+      done.className = 'flow-done';
+      done.textContent = '━ 事件结束 ━';
+      const container = result.querySelector('.flow-container');
+      if (container) container.appendChild(done);
+    }
+  }
+
+  // 兼容旧版直接展示（非 flow 模式）
+  showPresentedResult(presented) {
+    const result = document.getElementById('choiceResult');
+    if (!result) return;
+
+    let html = `<strong>${presented.success ? '✓' : '✗'}</strong> ${presented.msg || presented.outcome}`;
+
+    if (presented.story && presented.story.conclusion) {
+      html += `<div class="presented-conclusion">${presented.story.conclusion}</div>`;
+    }
+
+    if (presented.impactView && presented.impactView.length > 0) {
+      html += '<div class="impact-display">';
+      html += '<div class="impact-divider">━━ 修为变化 ━━</div>';
+      presented.impactView.forEach(item => {
+        const color = item.isPositive ? '#3d7a37' : '#b33939';
+        html += `<div class="impact-item">${item.reason} · <span style="color:${color}">${item.label} ${item.value}</span></div>`;
+      });
+      html += '</div>';
+    }
+
+    if (presented.buffView) {
+      html += `
+        <div class="buff-display">
+          <div class="impact-divider">━━ 状态获得 ━━</div>
+          <div class="buff-tag">「${presented.buffView.name}」${presented.buffView.effect} · 持续${presented.buffView.duration}</div>
+        </div>
+      `;
+    }
+
+    if (presented.flavorText) {
+      html += `<div class="flavor-text">${presented.flavorText}</div>`;
     }
 
     result.innerHTML = html;
@@ -208,19 +326,46 @@ export class UIManager {
       `;
     }
 
-    // ③ Technique Section
+    // ③ Buff Section (v2.4.1)
+    const buffSec = document.getElementById('buffSection');
+    if (buffSec) {
+      const buffs = BuffSystem.getSummary(State);
+      if (buffs.length === 0) {
+        buffSec.innerHTML = '<div class="tc-empty">暂无 Buff</div>';
+      } else {
+        buffSec.innerHTML = buffs.map(b => `
+          <div class="buff-card">
+            <div class="buff-card-name">${b.name}</div>
+            <div class="buff-card-desc">${b.desc}</div>
+            <div class="buff-card-time">剩余 ${b.remaining} 秒</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ④ Technique Section (v2.4.1)
     const tech = document.getElementById('techniqueSection');
     if (tech) {
       const learned = getLearnedTechniques();
       if (learned.length === 0) {
         tech.innerHTML = '<div class="tc-empty">尚未习得功法</div>';
       } else {
-        tech.innerHTML = learned.map(t => `
-          <div class="technique-card">
-            <div>${t.name}</div>
-            <div>Lv.${t.level}</div>
-          </div>
-        `).join('');
+        tech.innerHTML = learned.map(t => {
+          const progress = getUpgradeProgress(t.id);
+          const isMax = t.level >= t.maxLevel;
+          return `
+            <div class="technique-card">
+              <div class="technique-info">
+                <div class="technique-name">${t.name}</div>
+                <div class="technique-type">${getTypeLabel(t.type)} · Lv.${t.level}</div>
+              </div>
+              <div class="technique-progress">
+                <div class="technique-progress-bar" style="width: ${isMax ? 100 : progress}%"></div>
+              </div>
+              <div class="technique-progress-text">${isMax ? '已满级' : '升级进度 ' + progress + '%'}</div>
+            </div>
+          `;
+        }).join('');
       }
     }
 
@@ -294,11 +439,10 @@ export class UIManager {
     const active = getActiveTechniques();
     const meditationTag = State.meditationMode ? ' <span style="color:#3d7a37">[静修]</span>' : '';
     
-    // Buff 显示
-    const buffs = State.buffs || [];
+    // Buff 显示 (v2.4.1: 使用 BuffSystem.getSummary)
+    const buffs = BuffSystem.getSummary(State);
     const buffHtml = buffs.map(b => {
-      const remaining = Math.ceil(b.remainingTime);
-      return `<span class="buff-tag ${b.type}">${b.name} ${remaining}s</span>`;
+      return `<span class="buff-tag" title="${b.desc}">${b.name} ${b.remaining}s</span>`;
     }).join('');
     
     if (this.hiddenStats) {
@@ -306,7 +450,7 @@ export class UIManager {
         <div class="stat-line">${getRealmName()} | ${Math.floor(State.exp)}/${realm.expNeed} (${pct}%)</div>
         <div class="stat-line">灵根: ${root.name} | 五行: ${ELEMENTS[State.element]} | 心境: <span style="color:${mind.color}">${mind.name}</span></div>
         <div class="stat-line">气运: ${State.luck} | 事件: ${State.eventCount}${meditationTag}</div>
-        ${active.length > 0 ? `<div class="stat-line">功法: ${active.map(t => t.name).join(', ')}</div>` : ''}
+        ${active.length > 0 ? `<div class="stat-line">功法: ${active.map(t => t.name + ' Lv.' + t.level).join(', ')}</div>` : ''}
         ${buffHtml ? `<div class="stat-line">${buffHtml}</div>` : ''}
       `;
     }

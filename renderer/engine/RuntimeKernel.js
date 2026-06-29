@@ -1,17 +1,31 @@
+import { EventPresenter } from './EventPresenter.js';
+import { EventFlow } from './EventFlow.js';
 import { State, REALMS, ROOTS, MINDS, ELEMENTS, getRealmName, loadState, saveState, formatTime } from './State.js';
 import { EventEngine, EVENTS } from './EventEngine.js';
+import { StoryDirector } from './StoryDirector.js';
 import { UIManager } from '../ui/UIManager.js';
 import { InteractionManager } from '../interaction/InteractionManager.js';
 import { LifeRecord } from '../models/LifeRecord.js';
 import { HistoryManager } from '../models/HistoryManager.js';
 import { MilestoneRecord, MilestoneManager } from '../models/MilestoneRecord.js';
-import { ImpactEngine, BuffEngine } from '../models/Impact.js';
-import { calculateTechniqueEffects, learnTechnique, activateTechnique, TECHNIQUES } from './TechniqueSystem.js';
+import { EventResolver } from './EventResolver.js';
+import { BuffSystem } from './BuffSystem.js';
+import { StoryEventSystem } from './StoryEventSystem.js';
+import { questEngine } from './QuestEngine.js';
+import { worldEngine } from './WorldEngine.js';
+import { lifeEngine } from './LifeEngine.js';
+import { eventLoader } from './EventLoader.js';
+import {
+  calculateTechniqueEffects, learnTechnique, activateTechnique,
+  TECHNIQUE_TEMPLATES, getTechniqueTemplate, addExpToType
+} from './TechniqueSystem.js';
 
 export class RuntimeKernel {
   constructor() {
     this.ui = null;
+    this.director = new StoryDirector();
     this.eventEngine = null;
+    this.storyEventSystem = null;
     this.interaction = null;
     this.historyManager = new HistoryManager();
     this.milestoneManager = new MilestoneManager();
@@ -21,14 +35,31 @@ export class RuntimeKernel {
     this.meditationTicks = 0;
   }
 
-  init() {
+  async init() {
     console.log('[KERNEL] init');
 
     this.ui = new UIManager(this);
     this.ui.mount();
     console.log('[UI] mounted');
 
-    this.eventEngine = new EventEngine();
+    // v2.5: 加载事件数据（数据驱动）
+    await eventLoader.load();
+    console.log('[EventLoader] events loaded:', eventLoader.events.length);
+
+    // v2.5: 初始化 QuestEngine 事件链
+    await questEngine.loadChains();
+    console.log('[QuestEngine] chains loaded');
+
+    // v2.5: 初始化 WorldEngine
+    worldEngine.deserialize(State.worldProgress);
+    console.log('[WorldEngine] initialized');
+
+    // v2.5: 初始化 LifeEngine
+    lifeEngine.deserialize(State.lifeData);
+    console.log('[LifeEngine] initialized');
+
+    this.eventEngine = new EventEngine(this.director);
+    this.storyEventSystem = new StoryEventSystem();
     console.log('[ENGINE] created');
 
     this.interaction = new InteractionManager(this);
@@ -36,6 +67,7 @@ export class RuntimeKernel {
     console.log('[INTERACTION] bound');
 
     const offline = loadState();
+    this.migrateOldSave();
     this.ui.updateStats();
 
     if (offline) {
@@ -46,6 +78,20 @@ export class RuntimeKernel {
     window.kernel = this;
 
     console.log('[KERNEL] init complete');
+  }
+
+  /** 旧存档迁移 */
+  migrateOldSave() {
+    // 功法实例迁移（v2.4 → v2.4.1）
+    if (!State.techniques) State.techniques = { active: [], learned: [], instances: {} };
+    if (!State.techniques.instances) State.techniques.instances = {};
+    for (const id of State.techniques.learned || []) {
+      if (!State.techniques.instances[id]) {
+        const tpl = getTechniqueTemplate(id);
+        if (!tpl) continue;
+        State.techniques.instances[id] = { id, level: 1, exp: 0, maxLevel: tpl.maxLevel };
+      }
+    }
   }
 
   start() {
@@ -60,18 +106,36 @@ export class RuntimeKernel {
   }
 
   tick() {
+    // v2.5: 世界引擎更新
+    worldEngine.tick();
+
+    // v2.5: 人生引擎时间推进
+    lifeEngine.totalPlayTime++;
+    State.totalTime++;
+
     const effects = calculateTechniqueEffects(State.techniques.active);
     const growth = ROOTS[State.spiritualRoot].growth * (1 + effects.cultivationSpeed);
     const bonus = State.mindState === 'enlightenment' ? 1.2 : State.mindState === 'demon' ? 0.7 : 1;
     const meditationBonus = State.meditationMode ? 1.5 : 1;
-    
-    // Buff 修为加成
-    const buffBonus = BuffEngine.tick(State);
-    const totalGrowth = growth * (1 + buffBonus);
 
-    State.exp += 0.5 * totalGrowth * bonus * meditationBonus;
-    State.hp = Math.min(State.maxHp, State.hp + 0.1 * (1 + effects.bodyGrowth));
-    State.totalTime++;
+    // v2.5: 世界灵气浓度影响修为获取
+    const worldMods = worldEngine.getEventModifiers('daily');
+    const worldMultiplier = worldMods.cultivationMultiplier || 1;
+
+    // Buff 修为加成 (v2.4.1)
+    BuffSystem.tick(State);
+    const buffBonus = BuffSystem.getModifier(State, 'cultivationSpeed');
+    const totalGrowth = growth * (1 + buffBonus) * worldMultiplier;
+
+    const cultivationGain = 0.5 * totalGrowth * bonus * meditationBonus;
+    State.exp += cultivationGain;
+
+    // 功法经验分配：修为增长的 5% 转化为修行功法经验
+    addExpToType(State, 'cultivation', cultivationGain * 0.05);
+
+    // 肉身恢复受炼体功法加成
+    const bodyRecovery = 0.1 * (1 + effects.bodyGrowth);
+    State.hp = Math.min(State.maxHp, State.hp + bodyRecovery);
 
     if (State.meditationMode) {
       this.meditationTicks++;
@@ -105,7 +169,7 @@ export class RuntimeKernel {
         State.maxHp += 10;
         State.hp = State.maxHp;
         const realmName = getRealmName();
-        
+
         const record = new LifeRecord({
           id: crypto.randomUUID(),
           timestamp: Date.now(),
@@ -119,12 +183,12 @@ export class RuntimeKernel {
           rarity: 'normal'
         });
         this.historyManager.addRecord(record);
-        
+
         this.ui.showSystemBubble('层级提升', `提升至「${realmName}」！`);
         this.ui.updateStats();
         return;
       }
-      
+
       // 大境界突破
       const effects = calculateTechniqueEffects(State.techniques.active);
       const rate = 0.5 + (ROOTS[State.spiritualRoot].growth - 1) * 0.2 + State.luck * 0.001 + effects.breakthroughRate;
@@ -208,18 +272,51 @@ export class RuntimeKernel {
 
   handleChoice(event, choiceId) {
     console.log('[KERNEL] choice:', choiceId);
-    const res = event.resolve(choiceId);
+    const res = EventResolver.resolve(State, event, choiceId);
 
-    // 应用 Impact
-    if (res.impact) {
-      ImpactEngine.apply(State, res.impact);
-    }
+    const isChain = !!res.nextStage;
+    const isEndChain = !!res.endChain;
 
     const realmBefore = REALMS[State.realm].name;
     this.checkBreakthrough();
     const realmAfter = REALMS[State.realm].name;
     saveState();
 
+    // v2.4.2: 功法获取
+    if (res.technique) {
+      this.learnRandomTechnique();
+    }
+
+    // v2.4.2: 用 EventPresenter 转换结果为叙事结构
+    const presented = EventPresenter.present(event, res);
+    this.ui.presentedResult = presented; // 保存给 flow 用
+
+    // v2.4.2: 启动分步展示流程
+    const flow = new EventFlow(this.ui);
+    flow.onComplete = () => {
+      // v2.5: 流程完成后的事件链处理（QuestEngine）
+      if (isChain && res.nextStage) {
+        const nextStage = questEngine.advance(event.chainId, res.nextStage);
+        if (nextStage) {
+          setTimeout(() => {
+            this.eventEngine.reset();
+            this.ui.showEvent(nextStage);
+          }, 1500);
+          return;
+        }
+      }
+      if (isEndChain && event.chainId) {
+        questEngine.completeChain(event.chainId);
+      }
+      this.eventEngine.reset();
+      setTimeout(() => {
+        this.ui.hideEvent();
+        this.scheduleEvent();
+      }, 2000);
+    };
+    flow.start(presented);
+
+    // 记录历史（仍然保存原始数据）
     const record = new LifeRecord({
       id: crypto.randomUUID(),
       timestamp: Date.now(),
@@ -236,13 +333,28 @@ export class RuntimeKernel {
     });
     this.historyManager.addRecord(record);
 
-    this.ui.showResult(res);
-    this.eventEngine.reset();
+    // v2.5: 用 LifeEngine 记录修仙人生
+    lifeEngine.record({
+      title: event.title,
+      narrative: res.narrative || event.narrative,
+      outcome: res.outcome || res.msg,
+      flavorText: res.flavorText || '',
+      result: res.s ? 'success' : 'fail',
+      impact: res.impact,
+      realmBefore,
+      realmAfter,
+      rarity: event.rarity || 'normal',
+      technique: res.technique || false
+    });
 
-    setTimeout(() => {
-      this.ui.hideEvent();
-      this.scheduleEvent();
-    }, 4000);
+    // v2.5: 检查称号
+    const newTitles = lifeEngine.checkTitles();
+    if (newTitles.length > 0) {
+      newTitles.forEach(t => {
+        this.ui.showSystemBubble('获得称号', `获得「${t.name}」！${t.desc}`);
+      });
+      State.titles = lifeEngine.getTitles();
+    }
   }
 
   handlePetClick() {
@@ -284,8 +396,21 @@ export class RuntimeKernel {
     this.eventTimer = setTimeout(() => {
       if (!this.eventEngine.eventInProgress && !State.meditationMode) {
         this.eventEngine.eventInProgress = true;
-        const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-        this.ui.showEvent(event);
+
+        // v2.5: 优先尝试 QuestEngine 事件链
+        const chainEvent = questEngine.tryTrigger();
+        if (chainEvent) {
+          this.ui.showEvent(chainEvent);
+          return;
+        }
+
+        // v2.5: 使用数据驱动的事件池
+        const allEvents = eventLoader.events.length > 0 ? eventLoader.events : EVENTS;
+        const event = this.director.select(allEvents, State);
+        if (event) {
+          this.director.record(State, event);
+          this.ui.showEvent(event);
+        }
       } else {
         console.log('[KERNEL] event skipped, rescheduling');
         this.scheduleEvent();
@@ -294,7 +419,7 @@ export class RuntimeKernel {
   }
 
   learnRandomTechnique() {
-    const available = TECHNIQUES.filter(t => !State.techniques.learned.includes(t.id));
+    const available = TECHNIQUE_TEMPLATES.filter(t => !State.techniques.learned.includes(t.id));
     if (available.length === 0) return false;
     const t = available[Math.floor(Math.random() * available.length)];
     learnTechnique(t.id);
@@ -347,9 +472,24 @@ export class RuntimeKernel {
     State.eventCount = 0;
     State.totalTime = 0;
     State.meditationMode = false;
-    State.techniques = { active: [], learned: [] };
+    State.techniques = { active: [], learned: [], instances: {} };
     State.history = { events: [] };
-    State.buffs = [];
+    State.activeBuffs = [];
+    State.cultivation = 0;
+    State.mind = 0;
+    State.body = 0;
+    State.insight = 0;
+    State.fortune = 0;
+    State.breakthrough = 0;
+    State.eventMemory = { lastType: null, lastId: null, lastEventTime: 0 };
+
+    // v2.5: 重置新 PlayerState 字段
+    State.quests = { active: [], completed: [] };
+    State.companions = [];
+    State.inventory = { pills: [], materials: [], books: [] };
+    State.titles = [];
+    State.destiny = 0;
+    State.worldProgress = { day: 1, season: 'spring' };
 
     const roots = Object.keys(ROOTS);
     State.spiritualRoot = roots[Math.floor(Math.random() * roots.length)];
@@ -361,6 +501,12 @@ export class RuntimeKernel {
     this.tickCount = 0;
     this.meditationTicks = 0;
     this.eventEngine.reset();
+    this.storyEventSystem.reset();
+
+    // v2.5: 重置新引擎
+    questEngine.reset();
+    worldEngine.reset();
+    lifeEngine.clear();
 
     if (this.eventTimer) clearTimeout(this.eventTimer);
     this.scheduleEvent();

@@ -10,7 +10,7 @@ export class EventImpact {
     this.techniqueExp = [];
     this.unlocks = [];
     this.penalties = [];
-    this.buff = null; // { name, type, value, duration }
+    this.buff = null;
   }
 
   static from({
@@ -43,74 +43,23 @@ export class EventImpact {
 
   toDisplay() {
     const items = [];
-    if (this.cultivation > 0) items.push(`修为 +${this.cultivation}`);
-    if (this.cultivation < 0) items.push(`修为 ${this.cultivation}`);
-    if (this.spirit > 0) items.push(`灵力 +${this.spirit}`);
-    if (this.spirit < 0) items.push(`灵力 ${this.spirit}`);
-    if (this.body > 0) items.push(`肉身 +${this.body}`);
-    if (this.body < 0) items.push(`肉身 ${this.body}`);
-    if (this.mind > 0) items.push(`心境 +${this.mind}`);
-    if (this.mind < 0) items.push(`心境 ${this.mind}`);
-    if (this.insight > 0) items.push(`悟性 +${this.insight}`);
-    if (this.insight < 0) items.push(`悟性 ${this.insight}`);
-    if (this.fortune > 0) items.push(`福缘 +${this.fortune}`);
-    if (this.fortune < 0) items.push(`福缘 ${this.fortune}`);
-    if (this.breakthrough > 0) items.push(`突破感悟 +${this.breakthrough}%`);
-    if (this.breakthrough < 0) items.push(`突破感悟 ${this.breakthrough}%`);
+    if (this.cultivation > 0) items.push(`吸收天地灵气，修为 +${this.cultivation}`);
+    if (this.cultivation < 0) items.push(`灵气反噬，修为 ${this.cultivation}`);
+    if (this.spirit > 0) items.push(`灵气充盈，灵力 +${this.spirit}`);
+    if (this.spirit < 0) items.push(`灵气枯竭，灵力 ${this.spirit}`);
+    if (this.body > 0) items.push(`肉身淬炼，肉身 +${this.body}`);
+    if (this.body < 0) items.push(`肉身受损，肉身 ${this.body}`);
+    if (this.mind > 0) items.push(`道心更加稳固，心境 +${this.mind}`);
+    if (this.mind < 0) items.push(`道心动摇，心境 ${this.mind}`);
+    if (this.insight > 0) items.push(`感悟加深，悟性 +${this.insight}`);
+    if (this.insight < 0) items.push(`灵感消散，悟性 ${this.insight}`);
+    if (this.fortune > 0) items.push(`气运提升，福缘 +${this.fortune}`);
+    if (this.fortune < 0) items.push(`气运走低，福缘 ${this.fortune}`);
+    if (this.breakthrough > 0) items.push(`瓶颈松动，突破感悟 +${this.breakthrough}%`);
+    if (this.breakthrough < 0) items.push(`瓶颈更难，突破感悟 ${this.breakthrough}%`);
     if (this.unlocks.length > 0) items.push(`获得：${this.unlocks.join('、')}`);
     if (this.penalties.length > 0) items.push(`失去：${this.penalties.join('、')}`);
-    if (this.buff) items.push(`增益：${this.buff.name}（${this.buff.duration}秒）`);
+    if (this.buff) items.push(`【${this.buff.name}】持续 ${Math.floor(this.buff.duration / 60)} 分钟`);
     return items;
-  }
-}
-
-export class ImpactEngine {
-  static apply(state, impact) {
-    if (impact.cultivation) state.exp += impact.cultivation;
-    if (impact.spirit) state.mp = Math.min(state.maxMp + impact.spirit, state.mp + impact.spirit);
-    if (impact.body) state.hp = Math.min(state.maxHp + impact.body, state.hp + impact.body);
-    if (impact.mind) {
-      if (impact.mind > 0 && state.mindState === 'demon') state.mindState = 'stable';
-      if (impact.mind < 0 && state.mindState === 'stable') state.mindState = 'turbulent';
-      if (impact.mind < -2 && state.mindState === 'turbulent') state.mindState = 'demon';
-    }
-    if (impact.insight) state.luck += impact.insight;
-    if (impact.fortune) state.luck += impact.fortune;
-    if (impact.breakthrough) state.exp += impact.breakthrough * 0.5;
-    
-    // 发放 Buff
-    if (impact.buff) {
-      if (!state.buffs) state.buffs = [];
-      state.buffs.push({
-        ...impact.buff,
-        remainingTime: impact.buff.duration
-      });
-    }
-  }
-}
-
-export class BuffEngine {
-  static tick(state) {
-    if (!state.buffs || state.buffs.length === 0) return 0;
-    
-    let cultivationBonus = 0;
-    const remaining = [];
-    
-    for (const buff of state.buffs) {
-      buff.remainingTime--;
-      if (buff.remainingTime > 0) {
-        remaining.push(buff);
-        if (buff.type === 'cultivationSpeed') {
-          cultivationBonus += buff.value;
-        }
-      }
-    }
-    
-    state.buffs = remaining;
-    return cultivationBonus;
-  }
-  
-  static getActiveBuffs(state) {
-    return state.buffs || [];
   }
 }

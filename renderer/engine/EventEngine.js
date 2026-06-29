@@ -1,6 +1,6 @@
+import { EventImpact } from '../models/Impact.js';
 import { State } from './State.js';
 import { calculateTechniqueEffects } from './TechniqueSystem.js';
-import { EventImpact } from '../models/Impact.js';
 
 function makeEvent({ id, title, narrative, type, rarity, choices, resolve }) {
   return { id, title, narrative, type, rarity, choices, resolve };
@@ -30,7 +30,12 @@ export const EVENTS = [
           impact: EventImpact.from({
             cultivation: success ? 12 : -8,
             body: success ? 0 : -2,
-            breakthrough: success ? 3 : 0
+            breakthrough: success ? 3 : 0,
+            buff: success ? {
+              name: '灵气归顺',
+              modifiers: [{ target: 'cultivationSpeed', value: 0.2 }],
+              duration: 90
+            } : null
           })
         };
       }
@@ -85,7 +90,15 @@ export const EVENTS = [
             cultivation: success ? 18 : -10,
             mind: success ? 4 : -3,
             insight: success ? 1 : 0,
-            breakthrough: success ? 6 : 0
+            breakthrough: success ? 6 : 0,
+            buff: success ? {
+              name: '心魔尽消',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.3 },
+                { target: 'mindGrowth', value: 0.2 }
+              ],
+              duration: 120
+            } : null
           })
         };
       }
@@ -143,7 +156,15 @@ export const EVENTS = [
           impact: EventImpact.from({
             cultivation: success ? 30 : 5,
             insight: success ? 2 : 0,
-            breakthrough: success ? 8 : 0
+            breakthrough: success ? 8 : 0,
+            buff: success ? {
+              name: '顿悟',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.5 },
+                { target: 'insightGrowth', value: 0.3 }
+              ],
+              duration: 60
+            } : null
           })
         };
       }
@@ -199,7 +220,15 @@ export const EVENTS = [
           impact: EventImpact.from({
             cultivation: success ? 25 : 0,
             insight: success ? 2 : 0,
-            breakthrough: success ? 5 : 0
+            breakthrough: success ? 5 : 0,
+            buff: success ? {
+              name: '仙缘',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.25 },
+                { target: 'fortune', value: 0.1 }
+              ],
+              duration: 150
+            } : null
           })
         };
       }
@@ -254,7 +283,15 @@ export const EVENTS = [
             cultivation: success ? 80 : -15,
             body: success ? 0 : -5,
             fortune: success ? 10 : 0,
-            breakthrough: success ? 15 : 0
+            breakthrough: success ? 15 : 0,
+            buff: success ? {
+              name: '魔修战意',
+              modifiers: [
+                { target: 'attack', value: 0.2 },
+                { target: 'cultivationSpeed', value: 0.1 }
+              ],
+              duration: 180
+            } : null
           })
         };
       }
@@ -281,6 +318,659 @@ export const EVENTS = [
         impact: EventImpact.from({
           cultivation: success ? 0 : -5,
           fortune: success ? -10 : -20
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'gongfa_canjuan',
+    title: '功法残卷',
+    narrative: '路过古战场，\n草丛中露出半截泛黄卷轴。',
+    type: 'qi',
+    rarity: 'uncommon',
+    choices: [
+      { id: 'A', text: '拾取参悟（风险）' },
+      { id: 'B', text: '就地研读（平衡）' },
+      { id: 'C', text: '带走收藏（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.6;
+        return {
+          s: success,
+          msg: success ? '残卷中藏有功法！' : '残卷残缺，无法参悟。',
+          narrative: '路过古战场，\n你拾取残卷尝试参悟。',
+          outcome: success ? '参悟残卷，获得功法！' : '残卷破损，无法参悟。',
+          flavorText: success ? '机缘所至，\n不可强求。' : '残缺之物，\n难以使用。',
+          impact: EventImpact.from({
+            cultivation: success ? 15 : 0,
+            insight: success ? 1 : 0
+          }),
+          technique: true
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '你研读残卷，修为提升。',
+          narrative: '路过古战场，\n你就在原地研读残卷。',
+          outcome: '研读残卷，修为有所提升。',
+          flavorText: '书中自有颜如玉，\n书中自有黄金屋。',
+          impact: EventImpact.from({
+            cultivation: 10,
+            insight: 1
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '你带走残卷，待日后研究。',
+        narrative: '路过古战场，\n你带走残卷收藏。',
+        outcome: '残卷收藏，待日后研究。',
+        flavorText: '好记性不如烂笔头，\n收藏也是一种智慧。',
+        impact: EventImpact.from({
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'caiyao_dan',
+    title: '采药炼丹',
+    narrative: '后山灵气汇聚，\n一片灵药园浮现眼前。',
+    type: 'daily',
+    rarity: 'normal',
+    choices: [
+      { id: 'A', text: '冒险采药（风险）' },
+      { id: 'B', text: '稳妥采摘（平衡）' },
+      { id: 'C', text: '只取少许可（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.55;
+        return {
+          s: success,
+          msg: success ? '采得珍稀灵药！' : '惊动守护灵兽。',
+          narrative: '后山灵气汇聚，\n你选择冒险深入采药。',
+          outcome: success ? '采得珍稀灵药，炼丹有成。' : '惊动守护灵兽，狼狈逃回。',
+          flavorText: success ? '富贵险中求。' : '贪心不足蛇吞象。',
+          impact: EventImpact.from({
+            cultivation: success ? 15 : -5,
+            body: success ? 0 : -3,
+            buff: success ? {
+              name: '灵药丹成',
+              modifiers: [{ target: 'cultivationSpeed', value: 0.15 }, { target: 'bodyGrowth', value: 0.1 }],
+              duration: 120
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '稳妥采摘，小有收获。',
+          narrative: '后山灵气汇聚，\n你稳妥采摘灵药。',
+          outcome: '采摘数株灵药，小有收获。',
+          flavorText: '稳中求胜。',
+          impact: EventImpact.from({
+            cultivation: 8,
+            body: 1
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '只取少许，不伤根本。',
+        narrative: '后山灵气汇聚，\n你只取少量灵药。',
+        outcome: '取少许灵药，不伤药园根本。',
+        flavorText: '取之有度，\n用之不竭。',
+        impact: EventImpact.from({
+          cultivation: 4,
+          mind: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'fangshi_jiaoyi',
+    title: '坊市交易',
+    narrative: '途经修仙坊市，\n人声鼎沸，宝光流转。',
+    type: 'daily',
+    rarity: 'normal',
+    choices: [
+      { id: 'A', text: '豪赌买宝（风险）' },
+      { id: 'B', text: '谨慎挑选（平衡）' },
+      { id: 'C', text: '只看不买（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.45;
+        return {
+          s: success,
+          msg: success ? '捡到天大便宜！' : '买到假货，血本无归。',
+          narrative: '途经修仙坊市，\n你豪赌买宝。',
+          outcome: success ? '捡漏获得稀世灵材！' : '买到假货，损失惨重。',
+          flavorText: success ? '运气也是实力。' : '人心险恶。',
+          impact: EventImpact.from({
+            cultivation: success ? 20 : -10,
+            fortune: success ? 5 : -5,
+            buff: success ? {
+              name: '捡漏之喜',
+              modifiers: [{ target: 'fortune', value: 0.15 }],
+              duration: 90
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '稳妥交易，小赚一笔。',
+          narrative: '途经修仙坊市，\n你谨慎挑选货物。',
+          outcome: '交易几件灵材，小赚一笔。',
+          flavorText: '货比三家不吃亏。',
+          impact: EventImpact.from({
+            cultivation: 6,
+            fortune: 2
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '只看不买，心无旁骛。',
+        narrative: '途经修仙坊市，\n你只看不买。',
+        outcome: '观摩他人交易，眼界大开。',
+        flavorText: '眼界也是一种财富。',
+        impact: EventImpact.from({
+          cultivation: 3,
+          insight: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'daoyou_lundao',
+    title: '道友论道',
+    narrative: '山亭偶遇同道中人，\n对方邀请你论道切磋。',
+    type: 'daily',
+    rarity: 'normal',
+    choices: [
+      { id: 'A', text: '全力切磋（风险）' },
+      { id: 'B', text: '点到为止（平衡）' },
+      { id: 'C', text: '只论不斗（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.5;
+        return {
+          s: success,
+          msg: success ? '略胜一筹，对方叹服！' : '惜败半招，受益匪浅。',
+          narrative: '山亭偶遇同道，\n你全力切磋。',
+          outcome: success ? '略胜一筹，对方叹服离去。' : '惜败半招，但收获良多。',
+          flavorText: success ? '以武会友。' : '失败也是修行。',
+          impact: EventImpact.from({
+            cultivation: success ? 12 : 5,
+            insight: success ? 2 : 1,
+            body: success ? 0 : -2
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '点到为止，皆大欢喜。',
+          narrative: '山亭偶遇同道，\n你们点到为止切磋。',
+          outcome: '点到为止，双方各有所悟。',
+          flavorText: '和为贵。',
+          impact: EventImpact.from({
+            cultivation: 8,
+            insight: 1,
+            mind: 1
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '坐而论道，不涉斗法。',
+        narrative: '山亭偶遇同道，\n你只论道不斗法。',
+        outcome: '论道三刻，双方心境皆有所提升。',
+        flavorText: '论道亦是修行。',
+        impact: EventImpact.from({
+          cultivation: 5,
+          mind: 2,
+          insight: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'biguan_kuxiu',
+    title: '闭关苦修',
+    narrative: '寻得一处洞府，\n灵气充沛，正是闭关好时机。',
+    type: 'daily',
+    rarity: 'normal',
+    choices: [
+      { id: 'A', text: '冲击瓶颈（风险）' },
+      { id: 'B', text: '稳固修为（平衡）' },
+      { id: 'C', text: '冥想养神（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.4;
+        return {
+          s: success,
+          msg: success ? '冲破瓶颈，修为大进！' : '冲击失败，灵气反噬。',
+          narrative: '寻得洞府闭关，\n你冲击瓶颈。',
+          outcome: success ? '冲破瓶颈，修为大进！' : '冲击失败，灵气反噬。',
+          flavorText: success ? '破而后立。' : '欲速则不达。',
+          impact: EventImpact.from({
+            cultivation: success ? 25 : -8,
+            body: success ? 0 : -3,
+            breakthrough: success ? 8 : 0
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '稳固修为，根基扎实。',
+          narrative: '寻得洞府闭关，\n你稳固修为。',
+          outcome: '闭关三日，修为稳固。',
+          flavorText: '稳扎稳打。',
+          impact: EventImpact.from({
+            cultivation: 10,
+            body: 2,
+            mind: 1
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '冥想养神，心神合一。',
+        narrative: '寻得洞府闭关，\n你冥想养神。',
+        outcome: '冥想养神，心神合一。',
+        flavorText: '静能生慧。',
+        impact: EventImpact.from({
+          cultivation: 5,
+          mind: 3,
+          insight: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'guxiu_yifu',
+    title: '古修遗府',
+    narrative: '山崩地裂，\n一座古老洞府显露眼前。',
+    type: 'qi',
+    rarity: 'rare',
+    choices: [
+      { id: 'A', text: '强行闯入（风险）' },
+      { id: 'B', text: '破解禁制（平衡）' },
+      { id: 'C', text: '在外参悟（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.35;
+        return {
+          s: success,
+          msg: success ? '闯过禁制，获得传承！' : '触发禁制，身受重伤。',
+          narrative: '山崩地裂，古修遗府显露。\n你强行闯入。',
+          outcome: success ? '闯过禁制，获得古修传承！' : '触发禁制，身受重伤。',
+          flavorText: success ? '富贵险中求。' : '禁制重重。',
+          impact: EventImpact.from({
+            cultivation: success ? 60 : -15,
+            body: success ? 0 : -5,
+            insight: success ? 3 : 0,
+            buff: success ? {
+              name: '古修传承',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.35 },
+                { target: 'insightGrowth', value: 0.2 }
+              ],
+              duration: 180
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '破解禁制，安然入内。',
+          narrative: '山崩地裂，古修遗府显露。\n你破解禁制。',
+          outcome: '破解禁制，安然入内获得机缘。',
+          flavorText: '智慧胜过蛮力。',
+          impact: EventImpact.from({
+            cultivation: 30,
+            insight: 2,
+            mind: 1
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '在外参悟，略有所得。',
+        narrative: '山崩地裂，古修遗府显露。\n你在外参悟。',
+        outcome: '参悟洞府外溢灵气，略有所得。',
+        flavorText: '远观亦有道。',
+        impact: EventImpact.from({
+          cultivation: 12,
+          insight: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'lingshou_chumo',
+    title: '灵兽出没',
+    narrative: '林间异动，\n一只灵兽正在觅食。',
+    type: 'qi',
+    rarity: 'uncommon',
+    choices: [
+      { id: 'A', text: '尝试驯服（风险）' },
+      { id: 'B', text: '远远观察（平衡）' },
+      { id: 'C', text: '绕道而行（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.45;
+        return {
+          s: success,
+          msg: success ? '灵兽认主，福缘深厚！' : '灵兽受惊，反噬伤你。',
+          narrative: '林间异动，灵兽觅食。\n你尝试驯服。',
+          outcome: success ? '灵兽认主，成为你的伙伴！' : '灵兽受惊，反噬伤你。',
+          flavorText: success ? '万物有灵。' : '强求不得。',
+          impact: EventImpact.from({
+            cultivation: success ? 20 : -8,
+            body: success ? 0 : -3,
+            fortune: success ? 8 : -2,
+            buff: success ? {
+              name: '灵兽相伴',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.2 },
+                { target: 'fortune', value: 0.1 }
+              ],
+              duration: 150
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '观察灵兽，获得感悟。',
+          narrative: '林间异动，灵兽觅食。\n你远远观察。',
+          outcome: '观察灵兽习性，获得感悟。',
+          flavorText: '观物悟道。',
+          impact: EventImpact.from({
+            cultivation: 8,
+            insight: 2,
+            fortune: 2
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '绕道而行，不扰灵兽。',
+        narrative: '林间异动，灵兽觅食。\n你绕道而行。',
+        outcome: '不扰灵兽，各自安好。',
+        flavorText: '敬而远之。',
+        impact: EventImpact.from({
+          cultivation: 3,
+          mind: 2
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'lingmai_yidong',
+    title: '灵脉异动',
+    narrative: '大地微震，\n灵气突然从地底喷涌而出。',
+    type: 'qi',
+    rarity: 'uncommon',
+    choices: [
+      { id: 'A', text: '全力吸收（风险）' },
+      { id: 'B', text: '适度吸收（平衡）' },
+      { id: 'C', text: '记录位置（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.55;
+        return {
+          s: success,
+          msg: success ? '吸收大量灵气，修为大增！' : '灵气过盛，经脉受损。',
+          narrative: '大地微震，灵气喷涌。\n你全力吸收。',
+          outcome: success ? '吸收大量灵气，修为大增！' : '灵气过盛，经脉受损。',
+          flavorText: success ? '机不可失。' : '过犹不及。',
+          impact: EventImpact.from({
+            cultivation: success ? 35 : -10,
+            body: success ? 0 : -4,
+            spirit: success ? 3 : 0,
+            buff: success ? {
+              name: '灵脉加持',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.3 },
+                { target: 'spirit', value: 0.2 }
+              ],
+              duration: 120
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '适度吸收，修为稳步提升。',
+          narrative: '大地微震，灵气喷涌。\n你适度吸收。',
+          outcome: '适度吸收灵气，修为稳步提升。',
+          flavorText: '量力而行。',
+          impact: EventImpact.from({
+            cultivation: 15,
+            spirit: 2
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '记录位置，待日后利用。',
+        narrative: '大地微震，灵气喷涌。\n你记录位置。',
+        outcome: '记录灵脉位置，待日后利用。',
+        flavorText: '好记性不如烂笔头。',
+        impact: EventImpact.from({
+          cultivation: 5,
+          fortune: 5,
+          insight: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'zouhuo_rumo',
+    title: '走火入魔',
+    narrative: '修炼中气息突然逆行，\n丹田剧痛，意识模糊。',
+    type: 'crisis',
+    rarity: 'rare',
+    choices: [
+      { id: 'A', text: '强行逆转（风险）' },
+      { id: 'B', text: '散功保命（平衡）' },
+      { id: 'C', text: '顺其自然（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.35;
+        return {
+          s: success,
+          msg: success ? '逆转成功，因祸得福！' : '走火入魔，修为大损。',
+          narrative: '气息逆行，丹田剧痛。\n你强行逆转。',
+          outcome: success ? '逆转成功，修为反而精进！' : '走火入魔，修为大损。',
+          flavorText: success ? '置之死地而后生。' : '强行逆转，反受其害。',
+          impact: EventImpact.from({
+            cultivation: success ? 30 : -20,
+            body: success ? 0 : -5,
+            mind: success ? 0 : -4,
+            buff: success ? {
+              name: '逆练成功',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.25 },
+                { target: 'breakthroughRate', value: 0.15 }
+              ],
+              duration: 180
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '散功保命，保全根基。',
+          narrative: '气息逆行，丹田剧痛。\n你选择散功保命。',
+          outcome: '散功保命，修为受损但根基保全。',
+          flavorText: '留得青山在。',
+          impact: EventImpact.from({
+            cultivation: -8,
+            body: 1,
+            mind: 2
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '顺其自然，气息渐稳。',
+        narrative: '气息逆行，丹田剧痛。\n你顺其自然。',
+        outcome: '顺其自然，气息渐稳，修为微降。',
+        flavorText: '无为而无不为。',
+        impact: EventImpact.from({
+          cultivation: -3,
+          mind: 3,
+          insight: 1
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'choujia_zhuishang',
+    title: '仇家追杀',
+    narrative: '远处传来杀气，\n你的仇家带着人手追来了！',
+    type: 'crisis',
+    rarity: 'rare',
+    choices: [
+      { id: 'A', text: '正面迎战（风险）' },
+      { id: 'B', text: '边战边退（平衡）' },
+      { id: 'C', text: '隐匿遁走（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.4;
+        return {
+          s: success,
+          msg: success ? '大败仇家，威名远扬！' : '寡不敌众，身受重伤。',
+          narrative: '仇家追来，\n你选择正面迎战。',
+          outcome: success ? '大败仇家，威名远扬！' : '寡不敌众，身受重伤。',
+          flavorText: success ? '一夫当关。' : '双拳难敌四手。',
+          impact: EventImpact.from({
+            cultivation: success ? 50 : -15,
+            body: success ? 0 : -5,
+            fortune: success ? 5 : -3,
+            buff: success ? {
+              name: '大胜余威',
+              modifiers: [
+                { target: 'attack', value: 0.2 },
+                { target: 'cultivationSpeed', value: 0.1 }
+              ],
+              duration: 150
+            } : null
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '边战边退，保全性命。',
+          narrative: '仇家追来，\n你边战边退。',
+          outcome: '边战边退，虽受轻伤但保全性命。',
+          flavorText: '识时务者为俊杰。',
+          impact: EventImpact.from({
+            cultivation: 5,
+            body: -2,
+            mind: 2
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '隐匿遁走，避开锋芒。',
+        narrative: '仇家追来，\n你隐匿遁走。',
+        outcome: '成功隐匿，避过仇家追捕。',
+        flavorText: '退一步海阔天空。',
+        impact: EventImpact.from({
+          cultivation: 3,
+          mind: 2,
+          fortune: 3
+        })
+      };
+    }
+  }),
+
+  makeEvent({
+    id: 'tianjiang_yixiang',
+    title: '天降异象',
+    narrative: '天空异象纷呈，\n星辰移位，日月同辉。',
+    type: 'crisis',
+    rarity: 'rare',
+    choices: [
+      { id: 'A', text: '参悟异象（风险）' },
+      { id: 'B', text: '躲避天威（平衡）' },
+      { id: 'C', text: '静观其变（静修）' }
+    ],
+    resolve: (c) => {
+      if (c === 'A') {
+        const success = Math.random() < 0.45;
+        return {
+          s: success,
+          msg: success ? '参悟天道，顿悟突破！' : '异象太强，心神受损。',
+          narrative: '天空异象纷呈，\n你选择参悟。',
+          outcome: success ? '参悟天道，顿悟突破！' : '异象太强，心神受损。',
+          flavorText: success ? '天人合一。' : '天道难测。',
+          impact: EventImpact.from({
+            cultivation: success ? 45 : -10,
+            insight: success ? 3 : -2,
+            mind: success ? 0 : -3,
+            breakthrough: success ? 12 : 0
+          })
+        };
+      }
+      if (c === 'B') {
+        return {
+          s: true,
+          msg: '躲避天威，安然无恙。',
+          narrative: '天空异象纷呈，\n你躲避天威。',
+          outcome: '躲避天威，虽未参悟但安然无恙。',
+          flavorText: '知进退。',
+          impact: EventImpact.from({
+            cultivation: 8,
+            body: 2
+          })
+        };
+      }
+      return {
+        s: true,
+        msg: '静观其变，略有所得。',
+        narrative: '天空异象纷呈，\n你静观其变。',
+        outcome: '静观异象，略有所悟。',
+        flavorText: '静观自得。',
+        impact: EventImpact.from({
+          cultivation: 6,
+          insight: 1,
+          mind: 1
         })
       };
     }
@@ -311,7 +1001,15 @@ export const REALM_EVENTS = [
           impact: EventImpact.from({
             cultivation: success ? 100 : -20,
             body: success ? 5 : -5,
-            breakthrough: success ? 20 : 0
+            breakthrough: success ? 20 : 0,
+            buff: success ? {
+              name: '雷劫淬体',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.4 },
+                { target: 'bodyGrowth', value: 0.2 }
+              ],
+              duration: 180
+            } : null
           })
         };
       }
@@ -424,7 +1122,15 @@ export const REALM_EVENTS = [
           impact: EventImpact.from({
             cultivation: success ? 120 : -10,
             insight: success ? 3 : -1,
-            breakthrough: success ? 25 : 0
+            breakthrough: success ? 25 : 0,
+            buff: success ? {
+              name: '天地共鸣',
+              modifiers: [
+                { target: 'cultivationSpeed', value: 0.6 },
+                { target: 'insightGrowth', value: 0.4 }
+              ],
+              duration: 120
+            } : null
           })
         };
       }
@@ -460,7 +1166,8 @@ export const REALM_EVENTS = [
 ];
 
 export class EventEngine {
-  constructor() {
+  constructor(director) {
+    this.director = director;
     this.eventInProgress = false;
     this.eventTimer = null;
   }
@@ -468,8 +1175,8 @@ export class EventEngine {
   getEventChance() {
     let base = State.meditationMode ? 0.95 : 0.92;
     const effects = calculateTechniqueEffects(State.techniques.active);
-    if (effects.eventReduction > 0) {
-      base += effects.eventReduction * 0.05;
+    if (effects.eventRate < 0) {
+      base += effects.eventRate; // 负值降低事件概率
     }
     return base;
   }
@@ -478,7 +1185,8 @@ export class EventEngine {
     const r = Math.random();
     if (r > this.getEventChance()) {
       this.eventInProgress = true;
-      const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+      const event = this.director.select(EVENTS, State);
+      if (event) this.director.record(State, event);
       return event;
     }
     return null;
@@ -501,7 +1209,8 @@ export class EventEngine {
     this.eventTimer = setTimeout(() => {
       if (!this.eventInProgress) {
         this.eventInProgress = true;
-        const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+        const event = this.director.select(EVENTS, State);
+        if (event) this.director.record(State, event);
         callback(event);
       } else {
         console.log('[EventEngine] skipped, rescheduling');

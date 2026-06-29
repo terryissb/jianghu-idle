@@ -37,6 +37,12 @@ export let State = {
   realm: 0,
   subLevel: 0,
   exp: 0,
+  cultivation: 0,
+  mind: 0,
+  body: 0,
+  insight: 0,
+  fortune: 0,
+  breakthrough: 0,
   hp: 100,
   maxHp: 100,
   mp: 50,
@@ -49,9 +55,19 @@ export let State = {
   eventCount: 0,
   totalTime: 0,
   meditationMode: false,
-  techniques: { active: [], learned: [] },
+  techniques: { active: [], learned: [], instances: {} },
   history: { events: [] },
-  buffs: [],
+  activeBuffs: [],
+  eventMemory: { lastType: null, lastId: null, lastEventTime: 0 },
+  
+  // v2.5: 新增 PlayerState 字段
+  quests: { active: [], completed: [] },
+  companions: [],
+  inventory: { pills: [], materials: [], books: [] },
+  titles: [],
+  destiny: 0,
+  worldProgress: { day: 1, season: 'spring' },
+  
   lastSave: Date.now()
 };
 
@@ -62,10 +78,34 @@ export function loadState() {
       const data = JSON.parse(saved);
       const offline = Math.floor((Date.now() - data.lastSave) / 1000);
       State = { ...State, ...data };
-      if (!State.techniques) State.techniques = { active: [], learned: [] };
+      if (!State.techniques) State.techniques = { active: [], learned: [], instances: {} };
+      if (!State.techniques.instances) State.techniques.instances = {};
       if (!State.history) State.history = { events: [] };
-      if (!State.buffs) State.buffs = [];
+      if (!State.activeBuffs) State.activeBuffs = [];
       if (!State.subLevel) State.subLevel = 0;
+      if (!State.cultivation) State.cultivation = 0;
+      if (!State.mind) State.mind = 0;
+      if (!State.body) State.body = 0;
+      if (!State.insight) State.insight = 0;
+      if (!State.fortune) State.fortune = 0;
+      if (!State.breakthrough) State.breakthrough = 0;
+      if (!State.eventMemory) State.eventMemory = { lastType: null, lastId: null, lastEventTime: 0 };
+      // v2.5: 新字段兼容
+      if (!State.quests) State.quests = { active: [], completed: [] };
+      if (!State.companions) State.companions = [];
+      if (!State.inventory) State.inventory = { pills: [], materials: [], books: [] };
+      if (!State.titles) State.titles = [];
+      if (!State.destiny) State.destiny = 0;
+      if (!State.worldProgress) State.worldProgress = { day: 1, season: 'spring' };
+      // 旧存档兼容：buffs → activeBuffs
+      if (data.buffs && !data.activeBuffs) {
+        State.activeBuffs = data.buffs.map(b => ({
+          id: b.name + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+          name: b.name, type: b.type, value: b.value,
+          duration: b.duration || 60,
+          start: Date.now() - (b.remainingTime || b.duration || 60) * 1000
+        }));
+      }
       if (offline > 10) {
         const growth = ROOTS[State.spiritualRoot].growth;
         const gain = Math.floor(offline * 0.3 * growth);
